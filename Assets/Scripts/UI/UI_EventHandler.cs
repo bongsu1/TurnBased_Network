@@ -11,13 +11,22 @@ public class UI_EventHandler : MonoBehaviour, IPointerClickHandler, IPointerDown
     public event Action onPointerDownHandler = null;
     public event Action onPointerUpHandler = null;
 
+    private bool interactable = true;
+    public bool Interactable { get { return interactable; } set { interactable = value; } }
+
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (interactable == false)
+            return;
+
         onClickHandler?.Invoke();
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (interactable == false)
+            return;
+
         onPointerDownHandler?.Invoke();
 
         if (onPressedHandler != null && pressedRoutine == null)
@@ -28,6 +37,9 @@ public class UI_EventHandler : MonoBehaviour, IPointerClickHandler, IPointerDown
 
     public void OnPointerUp(PointerEventData eventData)
     {
+        if (interactable == false)
+            return;
+
         if (onPressedHandler != null && pressedRoutine != null)
         {
             StopCoroutine(pressedRoutine);

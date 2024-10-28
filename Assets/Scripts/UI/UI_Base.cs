@@ -99,4 +99,13 @@ public class UI_Base : MonoBehaviour
                 break;
         }
     }
+
+    public static void EventActive(GameObject go, bool active)
+    {
+        UI_EventHandler evt = go.GetComponent<UI_EventHandler>();
+        if (evt == null)
+            return;
+
+        evt.Interactable = active;
+    }
 }
