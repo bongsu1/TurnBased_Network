@@ -13,7 +13,7 @@ public class DataManager
     public void Init()
     {
         // CheckFirebase();
-        Debug.Log("파이어베이스 기능 안쓰는 있음");
+        Debug.Log("파이어베이스 기능 안쓰고 있음");
     }
 
     #region Firebase

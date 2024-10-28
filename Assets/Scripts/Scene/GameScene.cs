@@ -9,7 +9,7 @@ public class GameScene : BaseScene
         if (base.Init() == false)
             return false;
 
-        // Manager.UI.ShowPopupUI<UI_TitlePopup>();
+        Manager.UI.ShowPopupUI<UI_TitlePopup>();
         Debug.Log($"{name} : Init");
         return true;
     }

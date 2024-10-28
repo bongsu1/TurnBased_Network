@@ -19,6 +19,7 @@ public class UI_TitlePopup : UI_Popup
         LoginButton,
         GuestButton,
         SignupButton,
+        ShowPWButton,
     }
 
     protected override bool Init()
@@ -32,6 +33,7 @@ public class UI_TitlePopup : UI_Popup
         Get<Button>((int)Buttons.LoginButton).gameObject.BindEvent(OnClickLoginButton);
         Get<Button>((int)Buttons.GuestButton).gameObject.BindEvent(OnGuestButtonClick);
         Get<Button>((int)Buttons.SignupButton).gameObject.BindEvent(OnClickSignupButton);
+        Get<Button>((int)Buttons.ShowPWButton).gameObject.BindEvent(OnClickShowPWButton);
 
         return true;
     }
@@ -60,6 +62,10 @@ public class UI_TitlePopup : UI_Popup
             AuthResult result = task.Result;
             Debug.Log($"로그인 성공: {result.User.DisplayName} ({result.User.UserId})");
         });*/
+
+        // 임시
+        Manager.UI.ClosePopupUI(this);
+        Manager.UI.ShowPopupUI<UI_LobbyPopup>();
     }
 
     private void OnGuestButtonClick()
@@ -82,6 +88,10 @@ public class UI_TitlePopup : UI_Popup
             AuthResult result = task.Result;
             Debug.LogFormat($"익명 로그인 성공: {result.User.DisplayName} ({result.User.UserId})");
         });*/
+
+        // 임시
+        Manager.UI.ClosePopupUI(this);
+        Manager.UI.ShowPopupUI<UI_LobbyPopup>();
     }
 
     private void OnClickSignupButton()
@@ -111,5 +121,24 @@ public class UI_TitlePopup : UI_Popup
             AuthResult result = task.Result;
             Debug.Log($"가입 성공: {result.User.DisplayName} ({result.User.UserId})");
         });*/
+    }
+
+    private void OnClickShowPWButton()
+    {
+        TMP_InputField passwordInput = Get<TMP_InputField>((int)InputFields.PasswordInputField);
+        switch (passwordInput.contentType)
+        {
+            case TMP_InputField.ContentType.Standard:
+                passwordInput.contentType = TMP_InputField.ContentType.Password;
+                break;
+            case TMP_InputField.ContentType.Password:
+                passwordInput.contentType = TMP_InputField.ContentType.Standard;
+                break;
+            default:
+                passwordInput.contentType = TMP_InputField.ContentType.Standard;
+                break;
+        }
+
+        passwordInput.Select();
     }
 }
