@@ -71,6 +71,20 @@ public class UIManager
         return popup;
     }
 
+    public T MakeSubItem<T>(Transform parent = null, string name = null) where T : UI_Base
+    {
+        if (string.IsNullOrEmpty(name))
+            name = typeof(T).Name;
+
+        T prefab = Manager.Resource.Load<T>($"Prefab/UI/SubItem/{name}");
+        T subItem = Manager.Resource.Instantiate(prefab, parent);
+
+        subItem.transform.localScale = Vector3.one;
+        subItem.transform.localPosition = prefab.transform.position;
+
+        return subItem;
+    }
+
     public void ClosePopupUI()
     {
         if (_popupStack.Count == 0)

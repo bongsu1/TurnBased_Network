@@ -6,8 +6,6 @@ using UnityEngine.UI;
 
 public class UI_LobbyPopup : UI_Popup
 {
-    [SerializeField] GameObject[] displays;
-
     private enum Buttons
     {
         MenuButton,
@@ -78,6 +76,10 @@ public class UI_LobbyPopup : UI_Popup
         // 나머지 버튼들 비활성화
         // 매칭중일 때 매칭 버튼을 다시 클릭하면 매칭 취소
         Debug.Log("전투신청버튼");
+
+        // 매칭이 잡혔을때
+        Manager.UI.ClosePopupUI(this);
+        Manager.UI.ShowPopupUI<UI_BanPickPopup>();
     }
 
     private void OnClickCreateRoomButton() { Debug.Log("방만들기버튼"); }
