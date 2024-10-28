@@ -84,54 +84,84 @@ public class UI_LobbyPopup : UI_Popup
 
     private void ActiveDisplay(GameObjects objects)
     {
+        GameObject rbDisplay = Get<GameObject>((int)GameObjects.RankBattleDisplay);
+        GameObject mbDisplay = Get<GameObject>((int)GameObjects.MockBattleDisplay);
+        GameObject blDisplay = Get<GameObject>((int)GameObjects.BattleLogDisplay);
+        GameObject rkDisplay = Get<GameObject>((int)GameObjects.RankingDisplay);
+
+        Button rbButton = Get<Button>((int)Buttons.RankBattleButton);
+        Button mbButton = Get<Button>((int)Buttons.MockBattleButton);
+        Button blButton = Get<Button>((int)Buttons.BattleLogButton);
+        Button rkButton = Get<Button>((int)Buttons.RankingButton);
+
         switch (objects)
         {
             case GameObjects.RankBattleDisplay:
-                Get<GameObject>((int)GameObjects.RankBattleDisplay).SetActive(true);
-                Get<GameObject>((int)GameObjects.MockBattleDisplay).SetActive(false);
-                Get<GameObject>((int)GameObjects.BattleLogDisplay).SetActive(false);
-                Get<GameObject>((int)GameObjects.RankingDisplay).SetActive(false);
+                rbDisplay.SetActive(true);
+                mbDisplay.SetActive(false);
+                blDisplay.SetActive(false);
+                rkDisplay.SetActive(false);
 
-                Get<Button>((int)Buttons.RankBattleButton).interactable = false;
-                Get<Button>((int)Buttons.MockBattleButton).interactable = true;
-                Get<Button>((int)Buttons.BattleLogButton).interactable = true;
-                Get<Button>((int)Buttons.RankingButton).interactable = true;
+                rbButton.interactable = false;
+                mbButton.interactable = true;
+                blButton.interactable = true;
+                rkButton.interactable = true;
+
+                rbButton.gameObject.EventActive(false);
+                mbButton.gameObject.EventActive(true);
+                blButton.gameObject.EventActive(true);
+                rkButton.gameObject.EventActive(true);
                 break;
 
             case GameObjects.MockBattleDisplay:
-                Get<GameObject>((int)GameObjects.RankBattleDisplay).SetActive(false);
-                Get<GameObject>((int)GameObjects.MockBattleDisplay).SetActive(true);
-                Get<GameObject>((int)GameObjects.BattleLogDisplay).SetActive(false);
-                Get<GameObject>((int)GameObjects.RankingDisplay).SetActive(false);
+                rbDisplay.SetActive(false);
+                mbDisplay.SetActive(true);
+                blDisplay.SetActive(false);
+                rkDisplay.SetActive(false);
 
-                Get<Button>((int)Buttons.RankBattleButton).interactable = true;
-                Get<Button>((int)Buttons.MockBattleButton).interactable = false;
-                Get<Button>((int)Buttons.BattleLogButton).interactable = true;
-                Get<Button>((int)Buttons.RankingButton).interactable = true;
+                rbButton.interactable = true;
+                mbButton.interactable = false;
+                blButton.interactable = true;
+                rkButton.interactable = true;
+
+                rbButton.gameObject.EventActive(true);
+                mbButton.gameObject.EventActive(false);
+                blButton.gameObject.EventActive(true);
+                rkButton.gameObject.EventActive(true);
                 break;
 
             case GameObjects.BattleLogDisplay:
-                Get<GameObject>((int)GameObjects.RankBattleDisplay).SetActive(false);
-                Get<GameObject>((int)GameObjects.MockBattleDisplay).SetActive(false);
-                Get<GameObject>((int)GameObjects.BattleLogDisplay).SetActive(true);
-                Get<GameObject>((int)GameObjects.RankingDisplay).SetActive(false);
+                rbDisplay.SetActive(false);
+                mbDisplay.SetActive(false);
+                blDisplay.SetActive(true);
+                rkDisplay.SetActive(false);
 
-                Get<Button>((int)Buttons.RankBattleButton).interactable = true;
-                Get<Button>((int)Buttons.MockBattleButton).interactable = true;
-                Get<Button>((int)Buttons.BattleLogButton).interactable = false;
-                Get<Button>((int)Buttons.RankingButton).interactable = true;
+                rbButton.interactable = true;
+                mbButton.interactable = true;
+                blButton.interactable = false;
+                rkButton.interactable = true;
+
+                rbButton.gameObject.EventActive(true);
+                mbButton.gameObject.EventActive(true);
+                blButton.gameObject.EventActive(false);
+                rkButton.gameObject.EventActive(true);
                 break;
 
             case GameObjects.RankingDisplay:
-                Get<GameObject>((int)GameObjects.RankBattleDisplay).SetActive(false);
-                Get<GameObject>((int)GameObjects.MockBattleDisplay).SetActive(false);
-                Get<GameObject>((int)GameObjects.BattleLogDisplay).SetActive(false);
-                Get<GameObject>((int)GameObjects.RankingDisplay).SetActive(true);
+                rbDisplay.SetActive(false);
+                mbDisplay.SetActive(false);
+                blDisplay.SetActive(false);
+                rkDisplay.SetActive(true);
 
-                Get<Button>((int)Buttons.RankBattleButton).interactable = true;
-                Get<Button>((int)Buttons.MockBattleButton).interactable = true;
-                Get<Button>((int)Buttons.BattleLogButton).interactable = true;
-                Get<Button>((int)Buttons.RankingButton).interactable = false;
+                rbButton.interactable = true;
+                mbButton.interactable = true;
+                blButton.interactable = true;
+                rkButton.interactable = false;
+
+                rbButton.gameObject.EventActive(true);
+                mbButton.gameObject.EventActive(true);
+                blButton.gameObject.EventActive(true);
+                rkButton.gameObject.EventActive(false);
                 break;
 
             default:
