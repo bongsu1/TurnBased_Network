@@ -4,10 +4,11 @@ using UnityEngine;
 
 public class GameManager
 {
-    // 게임 데이터 관리
+    private CharacterDictionary characterDictionary = null;
+    public CharacterDictionary CharacterDictionary { get { return characterDictionary; } }
 
     public void Init()
     {
-
+        characterDictionary = Manager.Resource.Load<CharacterDictionary>("ScriptableObject/CharacterDictionary");
     }
 }
