@@ -16,9 +16,7 @@ public class UI_PickItem : UI_Base
         CharacterNameText,
     }
 
-    // 테스트
-    // character data 필요
-    private string characterName = null;
+    private CharacterData data = null;
 
     protected override bool Init()
     {
@@ -28,8 +26,6 @@ public class UI_PickItem : UI_Base
         Bind<Image>(typeof(Images));
         Bind<TMP_Text>(typeof(Texts));
 
-        gameObject.BindEvent(OnClickPickItem);
-
         RefreshUI();
 
         return true;
@@ -37,9 +33,9 @@ public class UI_PickItem : UI_Base
 
     // 테스트
     // 데이터를 받을 수 있도록 수정
-    public void SetInfo(string name)
+    public void SetInfo(CharacterData data)
     {
-        characterName = name;
+        this.data = data;
         RefreshUI();
     }
 
@@ -48,8 +44,6 @@ public class UI_PickItem : UI_Base
         if (_init == false)
             return;
 
-        Get<TMP_Text>((int)Texts.CharacterNameText).text = characterName;
+        Get<TMP_Text>((int)Texts.CharacterNameText).text = data.charName;
     }
-
-    private void OnClickPickItem() { Debug.Log($"pickItem : {characterName}"); }
 }

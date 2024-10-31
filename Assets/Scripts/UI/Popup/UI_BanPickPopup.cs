@@ -58,16 +58,6 @@ public class UI_BanPickPopup : UI_Popup
         OtherRankScoreText,
     }
 
-    private Dictionary<int, UI_PickItem> pickDic = new Dictionary<int, UI_PickItem>();
-
-    private int currentPickID = -1; // 데이터로 교체 고려
-    private int pickCount; // 지금 몇번째 선택중인지
-    private int myBan = 0; // 내 몇번째 캐릭터가 밴 될지
-    private int otherBan = 0; // 상대 몇번째 캐릭터가 밴 될지
-
-    // 테스트 데이터
-    string[] names = { "이상해씨", "파이리", "꼬부기", "피카츄", "이브이", "치코리타", "브케인", "리아코", "나무지기", "아차모", "물짱이" };
-
     protected override bool Init()
     {
         if (base.Init() == false)
@@ -93,14 +83,14 @@ public class UI_BanPickPopup : UI_Popup
         for (int i = 0; i < Enum.GetNames(typeof(Texts)).Length; i++)
             Get<TMP_Text>(i).gameObject.SetActive(false);
 
-        // 테스트
-        for (int i = 0; i < names.Length; i++)
+        int[] charIDs = Manager.Game.CharacterDictionary.GetIDs();
+        for (int i = 0; i < charIDs.Length; i++)
         {
             UI_PickItem pickItem = Manager.UI.MakeSubItem<UI_PickItem>(pickContent);
-            pickDic.Add(i, pickItem);
-            pickItem.SetInfo(names[i]);
+            pickItemDic.Add(charIDs[i], pickItem);
+            pickItem.SetInfo(Manager.Game.CharacterDictionary[charIDs[i]]);
 
-            int id = i;
+            int id = charIDs[i];
             pickItem.gameObject.BindEvent(() => OnClickPickItem(id));
         }
 
@@ -109,9 +99,22 @@ public class UI_BanPickPopup : UI_Popup
         return true;
     }
 
+    // 구현부
+
+    private bool[] myTurns = { true, false, false, true, true, false, false, true, true, false }; // 교차선택
+    private Dictionary<int, UI_PickItem> pickItemDic = new Dictionary<int, UI_PickItem>();
+    private List<int> picked = new List<int>();
+    private List<int> myPickList = new List<int>();
+    private List<int> otherPickList = new List<int>();
+
+    private int currentPickID = -1; // 데이터로 교체 고려
+    private int turnCount; // 지금 몇번째 선택중인지
+    private int myPickCount = 0;
+    private int otherPickCount = 0;
+
     private void OnClickPickItem(int selectID)
     {
-        currentPickID = selectID; // 데이터 에서 불러와서 사용하도록 수정
+        currentPickID = selectID;
 
         TMP_Text selectedName = Get<TMP_Text>((int)Texts.SelectedNameText);
         Image selectedImage = Get<Image>((int)Images.SelectedImage);
@@ -121,30 +124,62 @@ public class UI_BanPickPopup : UI_Popup
             selectedName.gameObject.SetActive(true);
         }
 
-        selectedName.text = names[selectID];
+        selectedName.text = Manager.Game.CharacterDictionary[selectID].charName;
     }
 
     private void OnClickSelectButton()
     {
-        if (currentPickID == -1) 
+        if (currentPickID == -1)
             return;
-        // 이미 픽된것이면 리턴되도록 추가
 
-        // 선택
-        Image myPickedImage = Get<Image>((int)Images.My1stPickedImage + pickCount);
-        TMP_Text myPickedname = Get<TMP_Text>((int)Texts.My1stPickedText + pickCount);
-        ++pickCount;
+        // 이미 픽 되어있다면
+        if (picked.Contains(currentPickID))
+        {
+            pickItemDic[currentPickID].GetComponent<Button>().interactable = false;
+            pickItemDic[currentPickID].gameObject.EventActive(false);
+            return;
+        }
 
-        myPickedImage.gameObject.SetActive(true);
-        myPickedname.gameObject.SetActive(true);
-        myPickedname.text = names[currentPickID];
+        // 내가 선택중일 때
+        if (myTurns[turnCount])
+        {
+            // 선택
+            Image myPickedImage = Get<Image>((int)Images.My1stPickedImage + myPickCount);
+            TMP_Text myPickedname = Get<TMP_Text>((int)Texts.My1stPickedText + myPickCount);
+            ++turnCount;
+            ++myPickCount;
 
-        pickDic[currentPickID].GetComponent<Button>().interactable = false;
-        pickDic[currentPickID].gameObject.EventActive(false);
+            myPickedImage.gameObject.SetActive(true);
+            myPickedname.gameObject.SetActive(true);
+            myPickedname.text = Manager.Game.CharacterDictionary[currentPickID].charName;
 
-        currentPickID = -1;
+            pickItemDic[currentPickID].GetComponent<Button>().interactable = false;
+            pickItemDic[currentPickID].gameObject.EventActive(false);
 
-        if (pickCount == 5) // 모두 선택했으면
+            myPickList.Add(currentPickID);
+            picked.Add(currentPickID);
+            currentPickID = -1;
+        }
+        else
+        {
+            Image otherPickedImage = Get<Image>((int)Images.Other1stPickedImage + otherPickCount);
+            TMP_Text otherPickedname = Get<TMP_Text>((int)Texts.Other1stPickedText + otherPickCount);
+            ++turnCount;
+            ++otherPickCount;
+
+            otherPickedImage.gameObject.SetActive(true);
+            otherPickedname.gameObject.SetActive(true);
+            otherPickedname.text = Manager.Game.CharacterDictionary[currentPickID].charName;
+
+            pickItemDic[currentPickID].GetComponent<Button>().interactable = false;
+            pickItemDic[currentPickID].gameObject.EventActive(false);
+
+            otherPickList.Add(currentPickID);
+            picked.Add(currentPickID);
+            currentPickID = -1;
+        }
+
+        if (turnCount == 10) // 모두 선택했으면
         {
             Button selectButton = Get<Button>((int)Buttons.SelectButton);
             selectButton.interactable = false;
@@ -167,15 +202,52 @@ public class UI_BanPickPopup : UI_Popup
         Get<Button>((int)Buttons.Other3rdPickedButton).gameObject.EventActive(active);
         Get<Button>((int)Buttons.Other4thPickedButton).gameObject.EventActive(active);
         Get<Button>((int)Buttons.Other5thPickedButton).gameObject.EventActive(active);
-    }
-
-    private void OnClickBanButton(int select)
-    {
-        otherBan = select;
 
         // 테스트
-        Get<Button>((int)Buttons.Other1stPickedButton + select).GetComponent<Image>().color = Color.red;
+        if (active)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                Image pickImage = Get<Image>((int)Images.My1stPickedImage + i);
+                int idx = i;
+                pickImage.gameObject.BindEvent(() =>
+                {
+                    pickImage.color = Color.red;
+                    myPickList.RemoveAt(idx);
+                    for (int i = 0; i < 5; i++)
+                    {
+                        Image pickImage = Get<Image>((int)Images.My1stPickedImage + i);
+                        pickImage.gameObject.EventActive(false);
+                    }
+                    otherBan = true;
+                    EndBanPick();
+                });
+            }
+        }
+    }
+
+    private void OnClickBanButton(int selectIdx)
+    {
+        // 테스트
+        Get<Button>((int)Buttons.Other1stPickedButton + selectIdx).GetComponent<Image>().color = Color.red;
+        otherPickList.RemoveAt(selectIdx);
 
         ActiveBanButton(false);
+        myBan = true;
+        EndBanPick();
+    }
+
+    bool myBan = false;
+    bool otherBan = false;
+    private void EndBanPick()
+    {
+        if (myBan && otherBan)
+        {
+            Manager.Game.SetPickList(myPickList, true);
+            Manager.Game.SetPickList(otherPickList, false);
+
+            Manager.UI.ClosePopupUI(this);
+            Manager.UI.ShowPopupUI<UI_BattlePopup>();
+        }
     }
 }

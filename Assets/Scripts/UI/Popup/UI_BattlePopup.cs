@@ -32,6 +32,14 @@ public class UI_BattlePopup : UI_Popup
         TurnSlider6,
         TurnSlider7,
         TurnSlider8,
+        My1stCharacterHP,
+        My2ndCharacterHP,
+        My3rdCharacterHP,
+        My4thCharacterHP,
+        Other1stCharacterHP,
+        Other2ndCharacterHP,
+        Other3rdCharacterHP,
+        Other4thCharacterHP,
     }
 
     private enum Images
@@ -90,29 +98,34 @@ public class UI_BattlePopup : UI_Popup
 
     private void OnClickFirstSkillButton()
     {
-        Debug.Log($"{curTurn.name}의 {curTurn.skills[0].name}선택");
+        Debug.Log($"{curTurn.data.charName}의 {curTurn.data.skills[0].skillName}선택");
         selectSkill = 0;
     }
 
     private void OnClickSeconSkillButton()
     {
-        Debug.Log($"{curTurn.name}의 {curTurn.skills[1].name}선택");
+        Debug.Log($"{curTurn.data.charName}의 {curTurn.data.skills[1].skillName}선택");
         selectSkill = 1;
     }
 
     private void OnClickThirdSkillButton()
     {
-        Debug.Log($"{curTurn.name}의 {curTurn.skills[2].name}선택");
+        Debug.Log($"{curTurn.data.charName}의 {curTurn.data.skills[2].skillName}선택");
         selectSkill = 2;
     }
 
     private void OnClickCharButton(int character)
     {
-        Debug.Log($"{inBattle[character].name}에게 사용");
+        Debug.Log($"{inBattle[character].data.charName}에게 사용");
+        inBattle[character].CurHP -= curTurn.data.skills[selectSkill].damage;
+
         int curIdx = Array.IndexOf(inBattle, curTurn);
-        actionGauges[curIdx] = 0;
+        inBattle[curIdx].actionGauge = 0;
 
         curTurn = TakeTurn();
+        if (curTurn == null)
+            return;
+        
         OnClickFirstSkillButton();
     }
 
@@ -121,51 +134,91 @@ public class UI_BattlePopup : UI_Popup
         for (int i = 0; i < 8; i++)
         {
             Slider turnGauge = Get<Slider>((int)Sliders.TurnSlider1 + i);
-            if (lives[i] == false)
+            if (inBattle[i].IsLive == false)
             {
                 turnGauge.gameObject.SetActive(false);
             }
 
-            turnGauge.value = actionGauges[i];
+            turnGauge.value = inBattle[i].actionGauge;
         }
     }
 
     // 구현부
-    // 테스트
-
-    private T_Character[] inBattle = new T_Character[8]; // 배틀에 참여중인 캐릭터들 
-    private int[] actionGauges = new int[8]; // 배틀에 참여한 캐릭터들의 행동게이지
-    private bool[] lives = new bool[8]; // 배틀에 참여중인 캐릭터들의 전투 가능여부 // 체력이 다 닳으면 false;
-    // 위의 두 배열은 구조체로 한번에 담아도 되겠다
+    private BattleCharacter[] inBattle = new BattleCharacter[8]; // 배틀에 참여중인 캐릭터들의 정보
 
     private int maxSpeed = 0; // 이번 배틀에서 가장 빠른 속도
     private int maxGauge = 0; // 가장 빠른 속도를 기준으로 행동게이지 최대치를 정함
-    private bool _setMaxGauge = false;
 
-    private Queue<T_Character> turnQue = new Queue<T_Character>(8);
-    private T_Character curTurn = null;
+    private Queue<BattleCharacter> turnQue = new Queue<BattleCharacter>(8);
+    private BattleCharacter curTurn = null;
+
+    private int myTeamDeathCount = 0; // 내팀 데스카운트
+    private int otherTeamDeathCount = 0; // 상대팀 데스카운트
+
+    private enum GameState
+    {
+        Start,
+        MyTurn,
+        OtherTurn,
+        InPrograss,
+        End,
+        MyWin,
+        OtherWin,
+    }
+    private GameState g_state = GameState.Start;
 
     public void InfomationInit()
     {
-        // 테스트
-        inBattle[0] = new T_Character("이상해씨", 45, T_Character.Attribute.Grass, 45, new T_Skill[] { new T_Skill("이상해씨1번", 1), new T_Skill("이상해씨2번", 1), new T_Skill("이상해씨3번", 1) });
-        inBattle[1] = new T_Character("파이리", 39, T_Character.Attribute.Fire, 65, new T_Skill[] { new T_Skill("파이리1번", 1), new T_Skill("파이리2번", 1), new T_Skill("파이리3번", 1) });
-        inBattle[2] = new T_Character("꼬부기", 44, T_Character.Attribute.Water, 43, new T_Skill[] { new T_Skill("꼬부기1번", 1), new T_Skill("꼬부기2번", 1), new T_Skill("꼬부기3번", 1) });
-        inBattle[3] = new T_Character("피카츄", 35, T_Character.Attribute.electricity, 90, new T_Skill[] { new T_Skill("피카츄1번", 1), new T_Skill("피카츄2번", 1), new T_Skill("피카츄3번", 1) });
-        inBattle[4] = new T_Character("이브이", 55, T_Character.Attribute.Normal, 55, new T_Skill[] { new T_Skill("이브이1번", 1), new T_Skill("이브이2번", 1), new T_Skill("이브이3번", 1) });
-        inBattle[5] = new T_Character("나무지기", 30, T_Character.Attribute.Grass, 70, new T_Skill[] { new T_Skill("나무지기1번", 1), new T_Skill("나무지기2번", 1), new T_Skill("나무지기3번", 1) });
-        inBattle[6] = new T_Character("아차모", 45, T_Character.Attribute.Fire, 45, new T_Skill[] { new T_Skill("아차모1번", 1), new T_Skill("아차모2번", 1), new T_Skill("아차모3번", 1) });
-        inBattle[7] = new T_Character("물짱이", 50, T_Character.Attribute.Water, 40, new T_Skill[] { new T_Skill("물짱이1번", 1), new T_Skill("물짱이2번", 1), new T_Skill("물짱이3번", 1) });
-
-        for (int i = 0; i < 8; i++)
+        List<int> pickIDs = Manager.Game.GetPickIDs(true);
+        for (int i = 0; i < 4; i++)
         {
-            TMP_Text name = Get<TMP_Text>((int)Texts.My1stCharacterButtonText + i);
-            name.text = inBattle[i].name;
+            inBattle[i] = new BattleCharacter(Manager.Game.CharacterDictionary[pickIDs[i]], BattleCharacter.Team.My);
+            Get<TMP_Text>((int)Texts.My1stCharacterButtonText + i).text = inBattle[i].data.charName;
+            Slider hpSlider = Get<Slider>((int)Sliders.My1stCharacterHP + i);
+            hpSlider.maxValue = inBattle[i].data.hp;
+            hpSlider.value = inBattle[i].data.hp;
+            int idx = i;
+            inBattle[i].onChangeHP += (hp) =>
+            {
+                hpSlider.value = hp;
+                if (hp == 0)
+                {
+                    ++myTeamDeathCount;
+                    Get<Button>((int)Buttons.My1stCharacterButton + idx).interactable = false;
+                    Get<Button>((int)Buttons.My1stCharacterButton + idx).gameObject.EventActive(false);
+
+                    if (myTeamDeathCount > 3)
+                    {
+                        g_state = GameState.OtherWin;
+                    }
+                }
+            };
         }
 
-        for (int i = 0; i < 8; i++)
+        pickIDs = Manager.Game.GetPickIDs(false);
+        for (int i = 0; i < 4; i++)
         {
-            lives[i] = true;
+            inBattle[i + 4] = new BattleCharacter(Manager.Game.CharacterDictionary[pickIDs[i]], BattleCharacter.Team.Other);
+            Get<TMP_Text>((int)Texts.Other1stCharacterButtonText + i).text = inBattle[i + 4].data.charName;
+            Slider hpSlider = Get<Slider>((int)Sliders.Other1stCharacterHP + i);
+            hpSlider.maxValue = inBattle[i + 4].data.hp;
+            hpSlider.value = inBattle[i + 4].data.hp;
+            int idx = i;
+            inBattle[i + 4].onChangeHP += (hp) =>
+            {
+                hpSlider.value = hp;
+                if (hp == 0)
+                {
+                    ++otherTeamDeathCount;
+                    Get<Button>((int)Buttons.Other1stCharacterButton + idx).interactable = false;
+                    Get<Button>((int)Buttons.Other1stCharacterButton + idx).gameObject.EventActive(false);
+
+                    if (otherTeamDeathCount > 3)
+                    {
+                        g_state = GameState.MyWin;
+                    }
+                }
+            };
         }
 
         StartBattle();
@@ -175,10 +228,10 @@ public class UI_BattlePopup : UI_Popup
     {
         for (int i = 0; i < 8; i++)
         {
-            int curSpeed = inBattle[i].speed;
-            if (maxSpeed < curSpeed)
+            int speed = inBattle[i].curSpeed;
+            if (maxSpeed < speed)
             {
-                maxSpeed = curSpeed;
+                maxSpeed = speed;
             }
         }
 
@@ -189,15 +242,11 @@ public class UI_BattlePopup : UI_Popup
 
     private void SetMaxGauge(int maxGauge)
     {
-        if (_setMaxGauge)
-            return;
-
         for (int i = 0; i < 8; i++)
         {
             Slider turnGauge = Get<Slider>((int)Sliders.TurnSlider1 + i);
             turnGauge.maxValue = maxGauge;
         }
-        _setMaxGauge = true;
     }
 
     private void increaseGauge()
@@ -207,13 +256,13 @@ public class UI_BattlePopup : UI_Popup
         {
             for (int i = 0; i < 8; i++)
             {
-                if (lives[i] == false)
+                if (inBattle[i].IsLive == false)
                     continue;
 
-                actionGauges[i] += inBattle[i].speed;
+                inBattle[i].actionGauge += inBattle[i].curSpeed;
 
                 // 행동게이지가 가득 찼으면
-                if (maxGauge <= actionGauges[i])
+                if (maxGauge <= inBattle[i].actionGauge)
                 {
                     turnQue.Enqueue(inBattle[i]);
                 }
@@ -222,8 +271,23 @@ public class UI_BattlePopup : UI_Popup
     }
 
     // 턴 큐에 있는 캐릭터를 가져온다
-    private T_Character TakeTurn()
+    private BattleCharacter TakeTurn()
     {
+        if (g_state >= GameState.End) // 전투가 끝난 상태
+        {
+            Debug.Log(g_state);
+            for (int i = 0; i < Enum.GetNames(typeof(Buttons)).Length; i++)
+            {
+                Get<Button>(i).gameObject.EventActive(false);
+            }
+            // 스킬 UI 끄기 등
+
+            // 테스트
+            Manager.UI.ClosePopupUI(this);
+            Manager.UI.ShowPopupUI<UI_LobbyPopup>();
+            return null;
+        }
+
         if (turnQue.Count == 0)
         {
             increaseGauge();
@@ -234,9 +298,66 @@ public class UI_BattlePopup : UI_Popup
         for (int i = 0; i < 3; i++)
         {
             int idx = i;
-            Get<TMP_Text>((int)Texts.FirstSkillText + i).text = curTurn.skills[i].name;
+            Get<TMP_Text>((int)Texts.FirstSkillText + i).text = curTurn.data.skills[i].skillName;
         }
 
+        if (curTurn.GetTeam == BattleCharacter.Team.My)
+            g_state = GameState.MyTurn;
+        else
+            g_state = GameState.OtherTurn;
+
         return curTurn;
+    }
+}
+
+public class BattleCharacter
+{
+    public enum Team
+    {
+        None,
+        My,
+        Other,
+    }
+
+    public CharacterData data;
+    private Team team;
+    public Team GetTeam { get { return team; } }
+    public int curSpeed;
+    private int curHP;
+    public int CurHP
+    {
+        get
+        {
+            return curHP;
+        }
+        set
+        {
+            curHP = value;
+            if (curHP <= 0)
+            {
+                curHP = 0;
+                isLive = false;
+            }
+            onChangeHP?.Invoke(curHP);
+        }
+    }
+
+    private bool isLive;
+    public bool IsLive { get { return isLive; } }
+    public int actionGauge;
+    public int[] skillCool;
+
+    public Action<int> onChangeHP;
+
+    public BattleCharacter(CharacterData data, Team team)
+    {
+        this.data = data;
+        curSpeed = data.speed;
+        curHP = data.hp;
+        isLive = true;
+        actionGauge = 0;
+        skillCool = new int[] { 1, 1, 1 }; // 스킬 쿨타임
+
+        this.team = team;
     }
 }

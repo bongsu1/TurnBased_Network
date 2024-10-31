@@ -11,7 +11,7 @@ public class CharacterDictionary : ScriptableObject
 
     private void Init()
     {
-        if (characterDic != null)
+        if (characterDic != null && characterDatas.Count == characterDic.Count)
             return;
 
         characterDic = new Dictionary<int, CharacterData>(31);
@@ -35,8 +35,9 @@ public class CharacterDictionary : ScriptableObject
         }
     }
 
-    public int[] GetKeyDatas()
+    public int[] GetIDs()
     {
+        Init();
         int size = characterDatas.Count;
         int[] keys = new int[size];
         for (int i = 0; i < size; i++)
