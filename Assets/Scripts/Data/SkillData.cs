@@ -5,10 +5,17 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "SkillData", menuName = "ScriptableObject/SkillData")]
 public class SkillData : ScriptableObject
 {
+    public enum Target
+    {
+        OtherTeam, // 상대팀
+        MyTeam, // 내팀
+        None,
+    }
+
     public string skillName;
     [TextArea] public string descript; // 스킬 설명
     public int damage;
-    // 타겟팅 : 아군인지 적인지 자신인지 타인인지
+    public Target target;
     // 타입
     // 쿨타임
 }

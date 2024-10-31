@@ -40,6 +40,7 @@ public class UI_BattlePopup : UI_Popup
         Other2ndCharacterHP,
         Other3rdCharacterHP,
         Other4thCharacterHP,
+        CurTurnHP,
     }
 
     private enum Images
@@ -52,6 +53,10 @@ public class UI_BattlePopup : UI_Popup
         TurnHandle6,
         TurnHandle7,
         TurnHandle8,
+        CurrentTurnImage,
+        SelectFirst,
+        SelectSecond,
+        SelectThird,
     }
 
     private enum Texts
@@ -67,6 +72,8 @@ public class UI_BattlePopup : UI_Popup
         Other2ndCharacterButtonText,
         Other3rdCharacterButtonText,
         Other4thCharacterButtonText,
+        CurrentTurnNameText,
+        CurrentTurnHPText,
     }
 
     private int selectSkill = 0; // 스킬을 선택하지 않았을때에도 1번(skills[0]) 스킬을 기본으로
@@ -81,11 +88,12 @@ public class UI_BattlePopup : UI_Popup
         Bind<Image>(typeof(Images));
         Bind<TMP_Text>(typeof(Texts));
 
-        InfomationInit();
 
         Get<Button>((int)Buttons.FirstSkillButton).gameObject.BindEvent(OnClickFirstSkillButton);
         Get<Button>((int)Buttons.SecondSkillButton).gameObject.BindEvent(OnClickSeconSkillButton);
         Get<Button>((int)Buttons.ThirdSkillButton).gameObject.BindEvent(OnClickThirdSkillButton);
+
+        ActiveSelectImage();
 
         for (int i = 0; i < 8; i++)
         {
@@ -93,25 +101,54 @@ public class UI_BattlePopup : UI_Popup
             Get<Button>((int)Buttons.My1stCharacterButton + i).gameObject.BindEvent(() => OnClickCharButton(idx));
         }
 
+        InfomationInit();
+
         return true;
     }
 
     private void OnClickFirstSkillButton()
     {
-        Debug.Log($"{curTurn.data.charName}의 {curTurn.data.skills[0].skillName}선택");
+        if (curTurn.GetTeam == BattleCharacter.Team.My)
+        {
+            ActiveCharacterButton(curTurn.data.skills[0].target);
+        }
+        // 테스트
+        else
+        {
+            ActiveCharacterButton(curTurn.data.skills[0].target == SkillData.Target.OtherTeam ? SkillData.Target.MyTeam : SkillData.Target.OtherTeam);
+        }
         selectSkill = 0;
+        ActiveSelectImage();
     }
 
     private void OnClickSeconSkillButton()
     {
-        Debug.Log($"{curTurn.data.charName}의 {curTurn.data.skills[1].skillName}선택");
+        if (curTurn.GetTeam == BattleCharacter.Team.My)
+        {
+            ActiveCharacterButton(curTurn.data.skills[1].target);
+        }
+        // 테스트
+        else
+        {
+            ActiveCharacterButton(curTurn.data.skills[1].target == SkillData.Target.OtherTeam ? SkillData.Target.MyTeam : SkillData.Target.OtherTeam);
+        }
         selectSkill = 1;
+        ActiveSelectImage();
     }
 
     private void OnClickThirdSkillButton()
     {
-        Debug.Log($"{curTurn.data.charName}의 {curTurn.data.skills[2].skillName}선택");
+        if (curTurn.GetTeam == BattleCharacter.Team.My)
+        {
+            ActiveCharacterButton(curTurn.data.skills[2].target);
+        }
+        // 테스트
+        else
+        {
+            ActiveCharacterButton(curTurn.data.skills[2].target == SkillData.Target.OtherTeam ? SkillData.Target.MyTeam : SkillData.Target.OtherTeam);
+        }
         selectSkill = 2;
+        ActiveSelectImage();
     }
 
     private void OnClickCharButton(int character)
@@ -125,7 +162,7 @@ public class UI_BattlePopup : UI_Popup
         curTurn = TakeTurn();
         if (curTurn == null)
             return;
-        
+
         OnClickFirstSkillButton();
     }
 
@@ -140,6 +177,107 @@ public class UI_BattlePopup : UI_Popup
             }
 
             turnGauge.value = inBattle[i].actionGauge;
+        }
+    }
+
+    private void ActiveSelectImage()
+    {
+        Get<Image>((int)Images.SelectFirst).gameObject.SetActive(selectSkill == 0);
+        Get<Image>((int)Images.SelectSecond).gameObject.SetActive(selectSkill == 1);
+        Get<Image>((int)Images.SelectThird).gameObject.SetActive(selectSkill == 2);
+    }
+
+    // 버튼 활성화
+    private void ActiveCharacterButton(SkillData.Target target)
+    {
+        switch (target)
+        {
+            case SkillData.Target.OtherTeam:
+                Get<Button>((int)Buttons.My1stCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.My2ndCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.My3rdCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.My4thCharacterButton).gameObject.EventActive(false);
+
+                Get<Button>((int)Buttons.My1stCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.My2ndCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.My3rdCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.My4thCharacterButton).interactable = false;
+
+                if (inBattle[4].IsLive)
+                {
+                    Get<Button>((int)Buttons.Other1stCharacterButton).gameObject.EventActive(true);
+                    Get<Button>((int)Buttons.Other1stCharacterButton).interactable = true;
+                }
+                if (inBattle[5].IsLive)
+                {
+                    Get<Button>((int)Buttons.Other2ndCharacterButton).gameObject.EventActive(true);
+                    Get<Button>((int)Buttons.Other2ndCharacterButton).interactable = true;
+                }
+                if (inBattle[6].IsLive)
+                {
+                    Get<Button>((int)Buttons.Other3rdCharacterButton).gameObject.EventActive(true);
+                    Get<Button>((int)Buttons.Other3rdCharacterButton).interactable = true;
+                }
+                if (inBattle[7].IsLive)
+                {
+                    Get<Button>((int)Buttons.Other4thCharacterButton).gameObject.EventActive(true);
+                    Get<Button>((int)Buttons.Other4thCharacterButton).interactable = true;
+                }
+
+                break;
+            case SkillData.Target.MyTeam:
+                if (inBattle[0].IsLive)
+                {
+                    Get<Button>((int)Buttons.My1stCharacterButton).gameObject.EventActive(true);
+                    Get<Button>((int)Buttons.My1stCharacterButton).interactable = true;
+                }
+                if (inBattle[1].IsLive)
+                {
+                    Get<Button>((int)Buttons.My2ndCharacterButton).gameObject.EventActive(true);
+                    Get<Button>((int)Buttons.My2ndCharacterButton).interactable = true;
+                }
+                if (inBattle[2].IsLive)
+                {
+                    Get<Button>((int)Buttons.My3rdCharacterButton).gameObject.EventActive(true);
+                    Get<Button>((int)Buttons.My3rdCharacterButton).interactable = true;
+                }
+                if (inBattle[3].IsLive)
+                {
+                    Get<Button>((int)Buttons.My4thCharacterButton).gameObject.EventActive(true);
+                    Get<Button>((int)Buttons.My4thCharacterButton).interactable = true;
+                }
+
+                Get<Button>((int)Buttons.Other1stCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.Other2ndCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.Other3rdCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.Other4thCharacterButton).gameObject.EventActive(false);
+
+                Get<Button>((int)Buttons.Other1stCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.Other2ndCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.Other3rdCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.Other4thCharacterButton).interactable = false;
+                break;
+            case SkillData.Target.None:
+                Get<Button>((int)Buttons.My1stCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.My2ndCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.My3rdCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.My4thCharacterButton).gameObject.EventActive(false);
+
+                Get<Button>((int)Buttons.My1stCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.My2ndCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.My3rdCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.My4thCharacterButton).interactable = false;
+
+                Get<Button>((int)Buttons.Other1stCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.Other2ndCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.Other3rdCharacterButton).gameObject.EventActive(false);
+                Get<Button>((int)Buttons.Other4thCharacterButton).gameObject.EventActive(false);
+
+                Get<Button>((int)Buttons.Other1stCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.Other2ndCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.Other3rdCharacterButton).interactable = false;
+                Get<Button>((int)Buttons.Other4thCharacterButton).interactable = false;
+                break;
         }
     }
 
@@ -237,7 +375,8 @@ public class UI_BattlePopup : UI_Popup
 
         maxGauge = maxSpeed * 10;
         SetMaxGauge(maxGauge);
-        TakeTurn();
+        curTurn = TakeTurn();
+        OnClickFirstSkillButton();
     }
 
     private void SetMaxGauge(int maxGauge)
@@ -294,7 +433,7 @@ public class UI_BattlePopup : UI_Popup
         }
 
         SetActionGaugeUI();
-        curTurn = turnQue.Dequeue();
+        BattleCharacter curTurn = turnQue.Dequeue();
         for (int i = 0; i < 3; i++)
         {
             int idx = i;
@@ -305,6 +444,12 @@ public class UI_BattlePopup : UI_Popup
             g_state = GameState.MyTurn;
         else
             g_state = GameState.OtherTurn;
+
+        Get<TMP_Text>((int)Texts.CurrentTurnNameText).text = curTurn.data.charName;
+        Get<TMP_Text>((int)Texts.CurrentTurnHPText).text = $"{curTurn.CurHP} / {curTurn.data.hp}";
+        Slider curhp = Get<Slider>((int)Sliders.CurTurnHP);
+        curhp.maxValue = curTurn.data.hp;
+        curhp.value = curTurn.CurHP;
 
         return curTurn;
     }
