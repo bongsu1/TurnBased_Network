@@ -40,7 +40,7 @@ public class UI_TitlePopup : UI_Popup
 
     private void OnClickLoginButton()
     {
-        /*string email = Get<TMP_InputField>((int)InputFields.IDInputField).text;
+        string email = Get<TMP_InputField>((int)InputFields.IDInputField).text;
         string password = Get<TMP_InputField>((int)InputFields.PasswordInputField).text;
 
         if (Manager.Data.IsVaild == false)
@@ -61,19 +61,20 @@ public class UI_TitlePopup : UI_Popup
 
             AuthResult result = task.Result;
             Debug.Log($"로그인 성공: {result.User.DisplayName} ({result.User.UserId})");
-        });*/
 
-        // 임시
-        Manager.UI.ClosePopupUI(this);
-        Manager.UI.ShowPopupUI<UI_LobbyPopup>();
+            Manager.UI.ClosePopupUI(this);
+            Manager.UI.ShowPopupUI<UI_LobbyPopup>();
+        });
+
     }
 
     private void OnGuestButtonClick()
     {
-        /*if (Manager.Data.IsVaild == false)
+        if (Manager.Data.IsVaild == false)
             return;
 
-        Manager.Data.Auth.SignInAnonymouslyAsync().ContinueWith(task => {
+        Manager.Data.Auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
+        {
             if (task.IsCanceled)
             {
                 Debug.LogError("익명 로그인 취소");
@@ -87,18 +88,18 @@ public class UI_TitlePopup : UI_Popup
 
             AuthResult result = task.Result;
             Debug.LogFormat($"익명 로그인 성공: {result.User.DisplayName} ({result.User.UserId})");
-        });*/
 
-        // 임시
-        Manager.UI.ClosePopupUI(this);
-        Manager.UI.ShowPopupUI<UI_LobbyPopup>();
+            Manager.UI.ClosePopupUI(this);
+            Manager.UI.ShowPopupUI<UI_LobbyPopup>();
+        });
+
     }
 
     private void OnClickSignupButton()
     {
         // 회원 가입 창 띄우기로 변경해야함
-        
-        /*string email = Get<TMP_InputField>((int)InputFields.IDInputField).text;
+
+        string email = Get<TMP_InputField>((int)InputFields.IDInputField).text;
         string password = Get<TMP_InputField>((int)InputFields.PasswordInputField).text;
 
         if (Manager.Data.IsVaild == false)
@@ -120,7 +121,7 @@ public class UI_TitlePopup : UI_Popup
             // Firebase user has been created.
             AuthResult result = task.Result;
             Debug.Log($"가입 성공: {result.User.DisplayName} ({result.User.UserId})");
-        });*/
+        });
     }
 
     private void OnClickShowPWButton()

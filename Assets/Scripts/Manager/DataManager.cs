@@ -12,8 +12,7 @@ public class DataManager
 
     public void Init()
     {
-        // CheckFirebase();
-        Debug.Log("파이어베이스 기능 안쓰고 있음");
+        CheckFirebase();
     }
 
     #region Firebase
@@ -43,6 +42,24 @@ public class DataManager
                 Debug.Log("파이어베이스 체크 완료");
 
                 isVaild = true;
+
+                // 테스트 디버그용
+                /*Manager.Data.Auth.SignInAnonymouslyAsync().ContinueWith(task =>
+                {
+                    if (task.IsCanceled)
+                    {
+                        Debug.LogError("익명 로그인 취소");
+                        return;
+                    }
+                    if (task.IsFaulted)
+                    {
+                        Debug.LogError($"익명 로그인 실패: {task.Exception}");
+                        return;
+                    }
+
+                    AuthResult result = task.Result;
+                    Debug.LogFormat($"익명 로그인 성공: {result.User.DisplayName} ({result.User.UserId})");
+                });*/
             }
             else
             {
