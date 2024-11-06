@@ -4,6 +4,21 @@ using UnityEngine;
 
 public class GameManager
 {
+    private Room roomInfo = null;
+    public Room RoomInfo
+    {
+        get
+        {
+            // 테스트용
+            if (roomInfo == null)
+            {
+                string[] testID = { "1P", "2P" };
+                roomInfo = new Room() { key = "Test Key", uids = testID };
+            }
+            return roomInfo;
+        }
+    }
+
     private CharacterDictionary characterDictionary = null;
     public CharacterDictionary CharacterDictionary { get { return characterDictionary; } }
 
@@ -14,18 +29,22 @@ public class GameManager
         characterDictionary = Manager.Resource.Load<CharacterDictionary>("ScriptableObject/CharacterDictionary");
     }
 
-    public void SetPickList(List<int> PickIDs, bool myPick)
+    public void SetRoomInfo(Room room)
     {
-        if (myPick)
-            inBattleList[0] = PickIDs;
-        else
-            inBattleList[1] = PickIDs;
+        roomInfo = room;
     }
 
-    public List<int> GetPickIDs(bool myPick)
+    public void SetPickList(List<int> firstPickList, List<int> secondPickList)
     {
-        if (inBattleList[0] == null)
-            return myPick ? new List<int> { 1, 4, 7, 25 } : new List<int> { 133, 252, 255, 258 }; // 테스트용
-        return myPick ? inBattleList[0] : inBattleList[1];
+        inBattleList[0] = firstPickList;
+        inBattleList[1] = secondPickList;
+    }
+
+    public List<int> GetPickIDs(bool first)
+    {
+        var pickIds = first ? inBattleList[0] : inBattleList[1];
+        if (pickIds == null)
+            return first ? new List<int> { 1, 4, 7, 25 } : new List<int> { 133, 252, 255, 258 }; // 테스트용
+        return pickIds;
     }
 }

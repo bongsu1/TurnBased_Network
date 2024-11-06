@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Firebase.Extensions;
 using Firebase.Auth;
+using System.Threading.Tasks;
 
 public class UI_TitlePopup : UI_Popup
 {
@@ -46,26 +47,7 @@ public class UI_TitlePopup : UI_Popup
         if (Manager.Data.IsVaild == false)
             return;
 
-        Manager.Data.Auth.SignInWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(task =>
-        {
-            if (task.IsCanceled)
-            {
-                Debug.LogError("로그인 취소");
-                return;
-            }
-            if (task.IsFaulted)
-            {
-                Debug.LogError($"로그인 실패: {task.Exception}");
-                return;
-            }
-
-            AuthResult result = task.Result;
-            Debug.Log($"로그인 성공: {result.User.DisplayName} ({result.User.UserId})");
-
-            Manager.UI.ClosePopupUI(this);
-            Manager.UI.ShowPopupUI<UI_LobbyPopup>();
-        });
-
+        Manager.Data.Auth.SignInWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(ToLobby);
     }
 
     private void OnGuestButtonClick()
@@ -73,26 +55,7 @@ public class UI_TitlePopup : UI_Popup
         if (Manager.Data.IsVaild == false)
             return;
 
-        Manager.Data.Auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(task =>
-        {
-            if (task.IsCanceled)
-            {
-                Debug.LogError("익명 로그인 취소");
-                return;
-            }
-            if (task.IsFaulted)
-            {
-                Debug.LogError($"익명 로그인 실패: {task.Exception}");
-                return;
-            }
-
-            AuthResult result = task.Result;
-            Debug.LogFormat($"익명 로그인 성공: {result.User.DisplayName} ({result.User.UserId})");
-
-            Manager.UI.ClosePopupUI(this);
-            Manager.UI.ShowPopupUI<UI_LobbyPopup>();
-        });
-
+        Manager.Data.Auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(ToLobby);
     }
 
     private void OnClickSignupButton()
@@ -141,5 +104,25 @@ public class UI_TitlePopup : UI_Popup
         }
 
         passwordInput.Select();
+    }
+
+    private void ToLobby(Task<AuthResult> task)
+    {
+        if (task.IsCanceled)
+        {
+            Debug.LogError("로그인 취소");
+            return;
+        }
+        if (task.IsFaulted)
+        {
+            Debug.LogError($"로그인 실패: {task.Exception}");
+            return;
+        }
+
+        AuthResult result = task.Result;
+        Debug.Log($"로그인 성공: {result.User.DisplayName} ({result.User.UserId})");
+
+        Manager.UI.ClosePopupUI(this);
+        Manager.UI.ShowPopupUI<UI_LobbyPopup>();
     }
 }

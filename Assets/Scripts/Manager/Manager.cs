@@ -48,4 +48,9 @@ public class Manager : MonoBehaviour
             // Application.targetFrameRate = 60;
         }
     }
+
+    private void OnApplicationQuit()
+    {
+        s_dataManager.Auth.SignOut();
+    }
 }

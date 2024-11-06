@@ -41,25 +41,24 @@ public class DataManager
 
                 Debug.Log("파이어베이스 체크 완료");
 
-                isVaild = true;
-
-                // 테스트 디버그용
-                /*Manager.Data.Auth.SignInAnonymouslyAsync().ContinueWith(task =>
+                /*// 테스트 디버그용
+                Manager.Data.Auth.SignInWithEmailAndPasswordAsync("rlaqhdtn22@gmail.com", "qwe123").ContinueWith(task =>
                 {
                     if (task.IsCanceled)
                     {
-                        Debug.LogError("익명 로그인 취소");
+                        Debug.LogError("로그인 취소");
                         return;
                     }
                     if (task.IsFaulted)
                     {
-                        Debug.LogError($"익명 로그인 실패: {task.Exception}");
+                        Debug.LogError($"로그인 실패: {task.Exception}");
                         return;
                     }
 
                     AuthResult result = task.Result;
-                    Debug.LogFormat($"익명 로그인 성공: {result.User.DisplayName} ({result.User.UserId})");
+                    Debug.LogFormat($"로그인 성공: {result.User.DisplayName} ({result.User.UserId})");
                 });*/
+                isVaild = true; // 테스트하느라 옮김 다시 옮겨 주세요
             }
             else
             {

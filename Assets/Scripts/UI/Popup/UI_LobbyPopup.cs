@@ -44,7 +44,8 @@ public class UI_LobbyPopup : UI_Popup
 
     private string myRoomKey = null;
     private Room myRoom = null;
-    private bool isMatch = false; // 매칭이 되었는지
+
+    private DatabaseReference matchingRef = null;
 
     protected override bool Init()
     {
@@ -65,6 +66,8 @@ public class UI_LobbyPopup : UI_Popup
         Get<Button>((int)Buttons.RankingButton).gameObject.BindEvent(OnClickRankingButton);
         Get<Button>((int)Buttons.RankMatchButton).gameObject.BindEvent(OnClickRankMatchButton);
         Get<Button>((int)Buttons.CreateRoomButton).gameObject.BindEvent(OnClickCreateRoomButton);
+
+        matchingRef = Manager.Data.DB.GetReference(Matching.Root);
 
         return true;
     }
@@ -182,7 +185,6 @@ public class UI_LobbyPopup : UI_Popup
     private void FindMatch(Task<DataSnapshot> task)
     {
         string uid = Manager.Data.Auth.CurrentUser.UserId;
-        DatabaseReference matchingRef = Manager.Data.DB.GetReference(Matching.Root);
 
         if (task.IsCanceled)
         {
@@ -225,7 +227,6 @@ public class UI_LobbyPopup : UI_Popup
         {
             myRoomKey = matchingRef.Push().Key;
 
-            Debug.Log("방이 없음");
             Room newRoom = new Room(myRoomKey, uid);
             matching.rooms.Add(newRoom);
 
@@ -234,7 +235,6 @@ public class UI_LobbyPopup : UI_Popup
         // 방이 있다
         else
         {
-            Debug.Log("방이 있음");
             matching.krp[myRoomKey].uids[1] = uid;
             matching.krp[myRoomKey].isFull = true;
 
@@ -248,8 +248,6 @@ public class UI_LobbyPopup : UI_Popup
 
     private void SubscribeValueChange(Task task)
     {
-        DatabaseReference matchingRef = Manager.Data.DB.GetReference(Matching.Root);
-
         if (task.IsCanceled)
         {
             // 취소
@@ -272,27 +270,25 @@ public class UI_LobbyPopup : UI_Popup
         }
 
         Debug.Log("참가 완료");
-        matchingRef.ValueChanged -= OnValueChange;
-        matchingRef.ValueChanged += OnValueChange;
+        matchingRef.ValueChanged -= OnMatch;
+        matchingRef.ValueChanged += OnMatch;
     }
 
-    private void OnValueChange(object obj, ValueChangedEventArgs args)
+    private void OnMatch(object obj, ValueChangedEventArgs args)
     {
-        if (isMatch)
-            return;
 
-        DatabaseReference matchingRef = Manager.Data.DB.GetReference(Matching.Root);
         string json = args.Snapshot.GetRawJsonValue();
 
         Matching matching = JsonUtility.FromJson<Matching>(json);
         matching.ChangeStructure(true);
 
         // 방이 사라졌을 때
-        if (matching.krp.TryGetValue(myRoomKey, out Room room) == false)
+        if (matching.krp.ContainsKey(myRoomKey) == false)
         {
             myRoom = null;
             myRoomKey = null;
 
+            matchingRef.ValueChanged -= OnMatch;
             Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(true);
             return;
         }
@@ -325,27 +321,26 @@ public class UI_LobbyPopup : UI_Popup
             return;
         }
 
-        isMatch = true;
+        matchingRef.ValueChanged -= OnMatch;
         string newJson = JsonUtility.ToJson(matching);
         matchingRef.SetRawJsonValueAsync(newJson).ContinueWithOnMainThread(task =>
         {
             if (task.IsCanceled)
             {
                 // 취소
-                isMatch = false;
-                // 한명이라도 접속을 못 했을 시 로직
+                // 한명이라도 접속을 못 했을 시 실행할 로직
                 return;
             }
             else if (task.IsFaulted)
             {
                 // 실패
-                isMatch = false;
-                // 한명이라도 접속을 못 했을 시 로직
+                // 한명이라도 접속을 못 했을 시 실행할 로직
                 return;
             }
 
             Debug.Log($"매칭 완료됨, 1P : {myRoom.uids[0]}, 2P : {myRoom.uids[1]}");
 
+            Manager.Game.SetRoomInfo(myRoom);
             Manager.UI.ClosePopupUI(this);
             Manager.UI.ShowPopupUI<UI_BanPickPopup>();
         });
@@ -357,6 +352,7 @@ public class Matching
 {
     public const string Root = "Matching/";
 
+    public bool exist;
     public List<Room> rooms;
     /// <summary>
     /// key room pair
@@ -382,6 +378,7 @@ public class Matching
     public Matching()
     {
         rooms = new List<Room>();
+        exist = true;
     }
 }
 
@@ -401,4 +398,6 @@ public class Room
         isFull = false;
         canStart = false;
     }
+
+    public Room() { /*테스트용*/}
 }

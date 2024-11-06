@@ -77,6 +77,7 @@ public class UI_BattlePopup : UI_Popup
     }
 
     private int selectSkill = 0; // 스킬을 선택하지 않았을때에도 1번(skills[0]) 스킬을 기본으로
+    private bool first = false;
 
     protected override bool Init()
     {
@@ -87,7 +88,6 @@ public class UI_BattlePopup : UI_Popup
         Bind<Slider>(typeof(Sliders));
         Bind<Image>(typeof(Images));
         Bind<TMP_Text>(typeof(Texts));
-
 
         Get<Button>((int)Buttons.FirstSkillButton).gameObject.BindEvent(OnClickFirstSkillButton);
         Get<Button>((int)Buttons.SecondSkillButton).gameObject.BindEvent(OnClickSeconSkillButton);
@@ -100,6 +100,9 @@ public class UI_BattlePopup : UI_Popup
             int idx = i;
             Get<Button>((int)Buttons.My1stCharacterButton + i).gameObject.BindEvent(() => OnClickCharButton(idx));
         }
+
+        string myUID = Manager.Data.Auth.CurrentUser.UserId;
+        first = myUID == Manager.Game.RoomInfo.uids[0];
 
         InfomationInit();
 
@@ -307,7 +310,7 @@ public class UI_BattlePopup : UI_Popup
 
     public void InfomationInit()
     {
-        List<int> pickIDs = Manager.Game.GetPickIDs(true);
+        List<int> pickIDs = Manager.Game.GetPickIDs(first);
         for (int i = 0; i < 4; i++)
         {
             inBattle[i] = new BattleCharacter(Manager.Game.CharacterDictionary[pickIDs[i]], BattleCharacter.Team.My);
@@ -333,10 +336,11 @@ public class UI_BattlePopup : UI_Popup
             };
         }
 
-        pickIDs = Manager.Game.GetPickIDs(false);
+        pickIDs = Manager.Game.GetPickIDs(first == false);
         for (int i = 0; i < 4; i++)
         {
             inBattle[i + 4] = new BattleCharacter(Manager.Game.CharacterDictionary[pickIDs[i]], BattleCharacter.Team.Other);
+            Debug.Log($"상대 {i}번째 캐릭터 이름 : {inBattle[i + 4].data.charName}");
             Get<TMP_Text>((int)Texts.Other1stCharacterButtonText + i).text = inBattle[i + 4].data.charName;
             Slider hpSlider = Get<Slider>((int)Sliders.Other1stCharacterHP + i);
             hpSlider.maxValue = inBattle[i + 4].data.hp;
