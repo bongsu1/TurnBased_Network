@@ -44,7 +44,10 @@ public class GameManager
     {
         var pickIds = first ? inBattleList[0] : inBattleList[1];
         if (pickIds == null)
+        {
+            Debug.Log("테스트용리스트");
             return first ? new List<int> { 1, 4, 7, 25 } : new List<int> { 133, 252, 255, 258 }; // 테스트용
+        }
         return pickIds;
     }
 }

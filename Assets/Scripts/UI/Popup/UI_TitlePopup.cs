@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using Firebase.Extensions;
 using Firebase.Auth;
 using System.Threading.Tasks;
+using System;
 
 public class UI_TitlePopup : UI_Popup
 {
@@ -47,6 +48,7 @@ public class UI_TitlePopup : UI_Popup
         if (Manager.Data.IsVaild == false)
             return;
 
+        ActiveButton(false);
         Manager.Data.Auth.SignInWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(ToLobby);
     }
 
@@ -55,6 +57,7 @@ public class UI_TitlePopup : UI_Popup
         if (Manager.Data.IsVaild == false)
             return;
 
+        ActiveButton(false);
         Manager.Data.Auth.SignInAnonymouslyAsync().ContinueWithOnMainThread(ToLobby);
     }
 
@@ -111,11 +114,13 @@ public class UI_TitlePopup : UI_Popup
         if (task.IsCanceled)
         {
             Debug.LogError("로그인 취소");
+            ActiveButton(true);
             return;
         }
         if (task.IsFaulted)
         {
             Debug.LogError($"로그인 실패: {task.Exception}");
+            ActiveButton(true);
             return;
         }
 
@@ -124,5 +129,17 @@ public class UI_TitlePopup : UI_Popup
 
         Manager.UI.ClosePopupUI(this);
         Manager.UI.ShowPopupUI<UI_LobbyPopup>();
+    }
+
+    private void ActiveButton(bool active)
+    {
+        Get<Button>((int)Buttons.LoginButton).interactable = active;
+        Get<Button>((int)Buttons.LoginButton).gameObject.EventActive(active);
+
+        Get<Button>((int)Buttons.GuestButton).interactable = active;
+        Get<Button>((int)Buttons.GuestButton).gameObject.EventActive(active);
+
+        Get<Button>((int)Buttons.SignupButton).interactable = active;
+        Get<Button>((int)Buttons.SignupButton).gameObject.EventActive(active);
     }
 }

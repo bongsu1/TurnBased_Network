@@ -118,7 +118,7 @@ public class UI_BanPickPopup : UI_Popup
         string p2 = Manager.Game.RoomInfo.uids[1];
 
         string myUID = Manager.Data.Auth.CurrentUser.UserId;
-        first = myUID == Manager.Game.RoomInfo.uids[0];
+        first = myUID == p1;
 
         pickRef = Manager.Data.DB.GetReference($"Battles/{roomKey}");
         // 선픽
@@ -274,7 +274,6 @@ public class UI_BanPickPopup : UI_Popup
 
     private void OnSelectPick(object obj, ValueChangedEventArgs args)
     {
-        Debug.Log("선택");
         if (turnCount == 10)
             return;
 
@@ -351,10 +350,15 @@ public class UI_BanPickPopup : UI_Popup
 
         Manager.Game.SetPickList(firstPickList, secondPickList);
 
-
+        StartCoroutine(WaitRoutine());
         // 지연 추가
-        //Manager.UI.ClosePopupUI(this);
-        //Manager.UI.ShowPopupUI<UI_BattlePopup>();
+    }
+
+    private IEnumerator WaitRoutine()
+    {
+        yield return new WaitForSeconds(2f);
+        Manager.UI.ClosePopupUI(this);
+        Manager.UI.ShowPopupUI<UI_BattlePopup>();
     }
 }
 
