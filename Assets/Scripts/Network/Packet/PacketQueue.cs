@@ -28,4 +28,18 @@ public class PacketQueue
             return _packetQueue.Dequeue();
         }
     }
+
+    public IPacket[] PopAll()
+    {
+        IPacket[] packets = null;
+        lock(_lock)
+        {
+            if(_packetQueue.Count > 0)
+            {
+                packets = _packetQueue.ToArray();
+                _packetQueue.Clear();
+            }
+        }
+        return packets;
+    }
 }

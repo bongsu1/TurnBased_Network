@@ -75,6 +75,10 @@ namespace ServerCore
         {
             if(_currentSession == null)
             {
+                if(_socket == null)
+                {
+                    return;
+                }
                 _socket.Shutdown(SocketShutdown.Both);
                 _socket.Close();
             }

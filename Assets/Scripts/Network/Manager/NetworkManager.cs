@@ -1,20 +1,26 @@
 using DummyClient;
 using ServerCore;
 using System;
-using System.Collections;
 using System.Net;
 using System.Net.Sockets;
-using System.Threading;
 using UnityEngine;
-using static ServerCore.Define;
 
 public class NetworkManager : MonoBehaviour
 {
-
-    ServerSession _session;
     [SerializeField] Define.Connect connect;
     [SerializeField] string domainName;
+
     Connector _connect;
+    ServerSession _session;
+
+    public void Send(ArraySegment<byte> sendBuff)
+    {
+        if (SessionState())
+        {
+            _session.Send(sendBuff);
+        }
+    }
+
     IPAddress[] ConnectAddress(Define.Connect connect)
     {
         string str;
@@ -25,7 +31,7 @@ public class NetworkManager : MonoBehaviour
                 break;
             case Define.Connect.Domain:
                 if (string.IsNullOrEmpty(domainName))
-                {   domainName = "pkc-5000.shop";   }
+                { domainName = "pkc-5000.shop"; }
                 str = domainName;
                 break;
             default:
@@ -59,13 +65,11 @@ public class NetworkManager : MonoBehaviour
                         connect
                         );
 
-                    StartCoroutine(CoSendPacket());
-
                 }
             }
-            if(enter == false)
+            if (enter == false)
             {
-                Debug.Log("??????");
+                Debug.Log("Address Invalid");
             }
         }
         catch (Exception e)
@@ -76,29 +80,15 @@ public class NetworkManager : MonoBehaviour
 
     private void Update()
     {
-        IPacket p = PacketQueue.Instance.Pop();
-        if (p != null)
+        IPacket[] ps = PacketQueue.Instance.PopAll();
+        if (ps != null)
         {
-            PacketManager.Instance.HandlePacket(_session, p);
-        }
-
-    }
-
-    IEnumerator CoSendPacket()
-    {
-        while(true)
-        {
-            yield return new WaitForSeconds(3);
-            if (SessionState())
+            foreach (var p in ps)
             {
-                C_Chat chat = new C_Chat() { chat = "Hellow" };
-                ArraySegment<byte> segment = chat.Write();
-                _session.Send(segment);
+                PacketManager.Instance.HandlePacket(_session, p);
             }
         }
     }
-
-
 
     private void OnDestroy()
     {
@@ -115,9 +105,9 @@ public class NetworkManager : MonoBehaviour
         if (_session.State != Define.ConnectState.Connect)
         {
             Debug.Log($"Session Is {_session.State}");
-
             return false;
         }
         return true;
     }
+
 }
