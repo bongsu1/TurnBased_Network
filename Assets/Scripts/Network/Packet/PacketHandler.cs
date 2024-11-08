@@ -11,12 +11,34 @@ internal class PacketHandler
         //Console.WriteLine($"{p.playerId} : {p.chat}");
         Debug.Log($"{p.playerId} : {p.chat}");
     }
+    public static void S_BroadcastLeaveGameHandler(PacketSession session, IPacket packet)
+    {
+        S_BroadcastLeaveGame p = packet as S_BroadcastLeaveGame;
+        ServerSession serverSession = session as ServerSession;
+    }
+
+    public static void S_BroadcastEnterGameHandler(PacketSession session, IPacket packet)
+    {
+        S_BroadcastEnterGame p = packet as S_BroadcastEnterGame;
+        ServerSession serverSession = session as ServerSession;
+    }
+    public static void S_BroadcastMoveHandler(PacketSession session, IPacket packet)
+    {
+        S_BroadcastMove p = packet as S_BroadcastMove;
+        ServerSession serverSession = session as ServerSession;
+    }
+    public static void S_PlayerListHandler(PacketSession session, IPacket packet)
+    {
+        S_PlayerList p = packet as S_PlayerList;
+        ServerSession serverSession = session as ServerSession;
+    }
+
+
 
     public static void S_BanPickHandler(PacketSession session, IPacket packet)
     {
         S_BanPick p = packet as S_BanPick;
         ServerSession serverSession = session as ServerSession;
-
     }
 
     public static void S_PickUpHandler(PacketSession session, IPacket packet)

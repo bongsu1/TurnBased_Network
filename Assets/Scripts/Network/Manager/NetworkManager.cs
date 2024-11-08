@@ -6,27 +6,24 @@ using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
+using static ServerCore.Define;
 
 public class NetworkManager : MonoBehaviour
 {
-    public enum Connect
-    {
-        Local,
-        Domain,
-    }
-    ServerSession _session;
-    [SerializeField] Connect connect;
-    [SerializeField] string domainName;
 
-    IPAddress[] ConnectAddress(Connect connect)
+    ServerSession _session;
+    [SerializeField] Define.Connect connect;
+    [SerializeField] string domainName;
+    Connector _connect;
+    IPAddress[] ConnectAddress(Define.Connect connect)
     {
         string str;
         switch (connect)
         {
-            case Connect.Local:
+            case Define.Connect.Local:
                 str = Dns.GetHostName();
                 break;
-            case Connect.Domain:
+            case Define.Connect.Domain:
                 if (string.IsNullOrEmpty(domainName))
                 {   domainName = "pkc-5000.shop";   }
                 str = domainName;
@@ -53,10 +50,10 @@ public class NetworkManager : MonoBehaviour
                     IPEndPoint remoteEndPoint = new IPEndPoint(address, ServerCore.Define.PortNum);
                     Debug.Log($"[RemoteAddress] : {remoteEndPoint} ");
 
-                    Connector connector = new Connector();
+                    _connect = new Connector();
                     _session = new ServerSession();
 
-                    connector.Connect(
+                    _connect.Connect(
                         remoteEndPoint,
                         () => { return _session; },
                         connect
@@ -105,10 +102,7 @@ public class NetworkManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        if(SessionState())
-        {
-            //_session.Disconnect();
-        }
+        _connect.Disconnect();
     }
 
     private bool SessionState()

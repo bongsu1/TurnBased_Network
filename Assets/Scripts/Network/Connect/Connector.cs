@@ -8,10 +8,13 @@ namespace ServerCore
     public class Connector
     {
         Func<Session> _sessionFactory;
+        Session _currentSession;
+        Socket _socket;
         //Lobby lobby = new Lobby();
 
-        public void Connect(IPEndPoint endPoint, Func<Session> sessionFactory, NetworkManager.Connect state, int count = 1)
+        public void Connect(IPEndPoint endPoint, Func<Session> sessionFactory, Define.Connect state, int count = 1)
         {
+            _currentSession = null;
             Socket socket = new Socket(
                 Define.AddressType,
                 Define.SocketType,
@@ -20,7 +23,7 @@ namespace ServerCore
             //socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true); // 재사용 설정 추가
             //socket.ReceiveTimeout = 1000;
 
-            if (state == NetworkManager.Connect.Domain)
+            if (state == Define.Connect.Domain)
             {
                 IPEndPoint bindPoint = new IPEndPoint(IPAddress.Any, Define.PortNum);
                 socket.Bind(bindPoint);
@@ -60,10 +63,24 @@ namespace ServerCore
                 Session session = _sessionFactory.Invoke();
                 session.Start(args.ConnectSocket);
                 session.OnConnected(args.RemoteEndPoint);
+                _currentSession = session;
             }
             else
             {
                 Console.WriteLine("OnConnectedCompleted Failed");
+            }
+        }
+
+        public void Disconnect()
+        {
+            if(_currentSession == null)
+            {
+                _socket.Shutdown(SocketShutdown.Both);
+                _socket.Close();
+            }
+            else
+            {
+                _currentSession.Disconnect();
             }
         }
     }

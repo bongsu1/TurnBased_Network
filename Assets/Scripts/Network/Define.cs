@@ -22,7 +22,11 @@ namespace ServerCore
             Connect = 1,
             DisConnect = 2,
         }
-
+        public enum Connect
+        {
+            Local,
+            Domain,
+        }
 
     }
 }
