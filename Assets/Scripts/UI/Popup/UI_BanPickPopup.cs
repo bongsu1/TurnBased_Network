@@ -3,6 +3,7 @@ using Firebase.Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -130,6 +131,23 @@ public class UI_BanPickPopup : UI_Popup
         pickRef.ValueChanged += OnSelectPick;
         #endregion
 
+        Get<TMP_Text>((int)Texts.MyNickNameText).text = Manager.Game.MyInfo.nickName;
+        Get<TMP_Text>((int)Texts.MyRankScoreText).text = $"{Manager.Game.MyInfo.rankPoint} 점";
+        Manager.Data.DB.GetReference(UserInfo.Root).Child(first ? p2 : p1)
+            .GetValueAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCompleted)
+            {
+                string json = task.Result.GetRawJsonValue();
+                UserInfo otherInfo = JsonUtility.FromJson<UserInfo>(json);
+                if (otherInfo == null)
+                    return;
+
+                Get<TMP_Text>((int)Texts.OtherNickNameText).text = otherInfo.nickName;
+                Get<TMP_Text>((int)Texts.OtherRankScoreText).text = $"{otherInfo.rankPoint} 점";
+            }
+        });
+
         return true;
     }
 
@@ -192,6 +210,7 @@ public class UI_BanPickPopup : UI_Popup
 
         myPickedImage.gameObject.SetActive(true);
         myPickedname.gameObject.SetActive(true);
+        myPickedImage.sprite = Manager.Game.CharacterDictionary[currentPickID].frontImage;
         myPickedname.text = Manager.Game.CharacterDictionary[currentPickID].charName;
 
         pickItems[currentPickID].GetComponent<Button>().interactable = false;
@@ -268,7 +287,9 @@ public class UI_BanPickPopup : UI_Popup
             selectedImage.gameObject.SetActive(true);
             selectedName.gameObject.SetActive(true);
         }
-
+        // 테스트 아직 스프라이트가 없는 캐릭터들이 있음
+        if (Manager.Game.CharacterDictionary[id].frontImage != null)
+            selectedImage.sprite = Manager.Game.CharacterDictionary[id].frontImage;
         selectedName.text = Manager.Game.CharacterDictionary[id].charName;
     }
 
@@ -298,6 +319,7 @@ public class UI_BanPickPopup : UI_Popup
 
             otherPickedImage.gameObject.SetActive(true);
             otherPickedname.gameObject.SetActive(true);
+            otherPickedImage.sprite = Manager.Game.CharacterDictionary[pickInfo.pick].frontImage;
             otherPickedname.text = Manager.Game.CharacterDictionary[pickInfo.pick].charName;
 
             pickItems[pickInfo.pick].GetComponent<Button>().interactable = false;
@@ -350,11 +372,11 @@ public class UI_BanPickPopup : UI_Popup
 
         Manager.Game.SetPickList(firstPickList, secondPickList);
 
-        StartCoroutine(WaitRoutine());
+        StartCoroutine(ToBattleRoutine());
         // 지연 추가
     }
 
-    private IEnumerator WaitRoutine()
+    private IEnumerator ToBattleRoutine()
     {
         yield return new WaitForSeconds(2f);
         Manager.UI.ClosePopupUI(this);

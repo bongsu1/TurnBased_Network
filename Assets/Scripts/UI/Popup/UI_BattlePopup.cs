@@ -59,6 +59,14 @@ public class UI_BattlePopup : UI_Popup
         SelectFirst,
         SelectSecond,
         SelectThird,
+        My1stCharacterButton,
+        My2ndCharacterButton,
+        My3rdCharacterButton,
+        My4thCharacterButton,
+        Other1stCharacterButton,
+        Other2ndCharacterButton,
+        Other3rdCharacterButton,
+        Other4thCharacterButton,
     }
 
     private enum Texts
@@ -84,6 +92,7 @@ public class UI_BattlePopup : UI_Popup
 
     private const string skill = "skill";
     private const string character = "character";
+    private const string doAct = "doAct";
 
     protected override bool Init()
     {
@@ -113,7 +122,7 @@ public class UI_BattlePopup : UI_Popup
 
         if (first)
         {
-            string Json = JsonUtility.ToJson(new BattleInfo(-1, -1));
+            string Json = JsonUtility.ToJson(new BattleInfo(-1, -1, false));
             battleRef.SetRawJsonValueAsync(Json);
 
         }
@@ -170,7 +179,7 @@ public class UI_BattlePopup : UI_Popup
     {
         // 두번이상 클릭 방지
         ActiveCharacterButton(SkillData.Target.None);
-        var send = new Dictionary<string, object> { { skill, selectSkill }, { character, selectCharacter } };
+        var send = new Dictionary<string, object> { { skill, selectSkill }, { character, selectCharacter }, { doAct, true } };
 
         battleRef.UpdateChildrenAsync(send).ContinueWithOnMainThread(task =>
         {
@@ -282,19 +291,21 @@ public class UI_BattlePopup : UI_Popup
 
     public void InfomationInit(bool first)
     {
-        // 이부분 부터 다시
         int firstTextIdx = first ? (int)Texts.My1stCharacterButtonText : (int)Texts.Other1stCharacterButtonText;
         int firstSliderIdx = first ? (int)Sliders.My1stCharacterHP : (int)Sliders.Other1stCharacterHP;
         int firstButtonIdx = first ? (int)Buttons.My1stCharacterButton : (int)Buttons.Other1stCharacterButton;
+        int firstImageIdx = first ? (int)Images.My1stCharacterButton : (int)Images.Other1stCharacterButton;
         BattleCharacter.Team firstTeam = first ? BattleCharacter.Team.My : BattleCharacter.Team.Other;
         GameState secondWin = first ? GameState.OtherWin : GameState.MyWin;
 
         List<int> pickIDs = Manager.Game.GetPickIDs(true);
         for (int i = 0; i < 4; i++)
         {
-
             inBattle[i] = new BattleCharacter(Manager.Game.CharacterDictionary[pickIDs[i]], firstTeam);
             Get<TMP_Text>(firstTextIdx + i).text = inBattle[i].data.charName;
+            Get<Image>(firstImageIdx + i).sprite =
+                first ? inBattle[i].data.backImage : inBattle[i].data.frontImage;
+
             Slider hpSlider = Get<Slider>(firstSliderIdx + i);
             hpSlider.maxValue = inBattle[i].data.hp;
             hpSlider.value = inBattle[i].data.hp;
@@ -319,6 +330,7 @@ public class UI_BattlePopup : UI_Popup
         int secondTextIdx = first ? (int)Texts.Other1stCharacterButtonText : (int)Texts.My1stCharacterButtonText;
         int secondSliderIdx = first ? (int)Sliders.Other1stCharacterHP : (int)Sliders.My1stCharacterHP;
         int secondButtonIdx = first ? (int)Buttons.Other1stCharacterButton : (int)Buttons.My1stCharacterButton;
+        int secondImageIdx = first ? (int)Images.Other1stCharacterButton : (int)Images.My1stCharacterButton;
         BattleCharacter.Team secondTeam = first ? BattleCharacter.Team.Other : BattleCharacter.Team.My;
         GameState firstWin = first ? GameState.MyWin : GameState.OtherWin;
 
@@ -327,6 +339,9 @@ public class UI_BattlePopup : UI_Popup
         {
             inBattle[i + 4] = new BattleCharacter(Manager.Game.CharacterDictionary[pickIDs[i]], secondTeam);
             Get<TMP_Text>(secondTextIdx + i).text = inBattle[i + 4].data.charName;
+            Get<Image>(secondImageIdx + i).sprite =
+                first ? inBattle[i + 4].data.frontImage : inBattle[i + 4].data.backImage;
+
             Slider hpSlider = Get<Slider>(secondSliderIdx + i);
             hpSlider.maxValue = inBattle[i + 4].data.hp;
             hpSlider.value = inBattle[i + 4].data.hp;
@@ -372,8 +387,8 @@ public class UI_BattlePopup : UI_Popup
     {
         for (int i = 0; i < 8; i++)
         {
-            Slider turnGauge = Get<Slider>((int)Sliders.TurnSlider1 + i);
-            turnGauge.maxValue = maxGauge;
+            Get<Slider>((int)Sliders.TurnSlider1 + i).maxValue = maxGauge;
+            Get<Image>((int)Images.TurnHandle1 + i).sprite = inBattle[i].data.frontImage;
         }
     }
 
@@ -403,7 +418,6 @@ public class UI_BattlePopup : UI_Popup
     {
         if (g_state >= GameState.End) // 전투가 끝난 상태
         {
-            Debug.Log(g_state);
             for (int i = 0; i < Enum.GetNames(typeof(Buttons)).Length; i++)
             {
                 Get<Button>(i).gameObject.EventActive(false);
@@ -420,6 +434,8 @@ public class UI_BattlePopup : UI_Popup
             // 전투 정보 초기화
             Manager.Game.SetRoomInfo(null);
             Manager.Game.SetPickList(null, null);
+
+            RecordBattle();
             StartCoroutine(EndRoutine());
             return null;
         }
@@ -440,6 +456,7 @@ public class UI_BattlePopup : UI_Popup
 
         Get<TMP_Text>((int)Texts.CurrentTurnNameText).text = curTurn.data.charName;
         Get<TMP_Text>((int)Texts.CurrentTurnHPText).text = $"{curTurn.CurHP} / {curTurn.data.hp}";
+        Get<Image>((int)Images.CurrentTurnImage).sprite = curTurn.data.frontImage;
         Slider curhp = Get<Slider>((int)Sliders.CurTurnHP);
         curhp.maxValue = curTurn.data.hp;
         curhp.value = curTurn.CurHP;
@@ -450,6 +467,32 @@ public class UI_BattlePopup : UI_Popup
             g_state = GameState.OtherTurn;
 
         return curTurn;
+    }
+
+    // 전투 기록
+    private void RecordBattle()
+    {
+        int rankPoint = Manager.Game.MyInfo.rankPoint;
+        int[] log = Manager.Game.MyInfo.log;
+        if (g_state == GameState.MyWin)
+        {
+            rankPoint += 10;
+            ++log[0];
+        }
+        else if (g_state == GameState.OtherWin)
+        {
+            rankPoint -= 10;
+            // 랭크포인트는 0 이하로 내려가지 않음
+            if (rankPoint <= 0)
+            {
+                rankPoint = 0;
+            }
+            ++log[1];
+        }
+
+        var send = new Dictionary<string, object> { { "rankPoint", rankPoint }, { "log", log } };
+        Manager.Data.DB.GetReference(UserInfo.Root).Child(Manager.Data.Auth.CurrentUser.UserId)
+            .UpdateChildrenAsync(send);
     }
 
     // 테스트용
@@ -469,7 +512,6 @@ public class UI_BattlePopup : UI_Popup
         if (active)
         {
             OnClickFirstSkillButton();
-            ActiveSelectImage();
         }
     }
 
@@ -482,11 +524,13 @@ public class UI_BattlePopup : UI_Popup
         string json = args.Snapshot.GetRawJsonValue();
         BattleInfo battleInfo = JsonUtility.FromJson<BattleInfo>(json);
 
-        Debug.LogError($"skill : {battleInfo.skill}, character : {battleInfo.character}");
-        if (battleInfo.skill < 0 || battleInfo.character < 0)
+        if (battleInfo.doAct == false || battleInfo.skill < 0 || battleInfo.character < 0)
             return;
 
         ActionTurn(battleInfo.skill, battleInfo.character);
+
+        var send = new Dictionary<string, object> { { doAct, false } };
+        battleRef.UpdateChildrenAsync(send);
     }
 
     private void ActionTurn(int selectSkill, int selectCharacter)
@@ -561,11 +605,13 @@ public struct BattleInfo
 {
     public int skill;
     public int character;
+    public bool doAct;
 
-    public BattleInfo(int skill, int character)
+    public BattleInfo(int skill, int character, bool doAct)
     {
         this.skill = skill;
         this.character = character;
+        this.doAct = doAct;
     }
 }
 

@@ -20,6 +20,8 @@ public class UI_LobbyPopup : UI_Popup
         RankingButton,
         RankMatchButton,
         CreateRoomButton,
+        LogoutButton,
+        QuitButton,
     }
 
     private enum GameObjects
@@ -28,6 +30,8 @@ public class UI_LobbyPopup : UI_Popup
         MockBattleDisplay,
         BattleLogDisplay,
         RankingDisplay,
+        Menu,
+        Matching,
     }
 
     private enum Images
@@ -38,6 +42,7 @@ public class UI_LobbyPopup : UI_Popup
 
     private enum Texts
     {
+        ProfileImageText,
         RankPointText,
         LogInfoText, // 전적 텍스트
     }
@@ -46,6 +51,7 @@ public class UI_LobbyPopup : UI_Popup
     private Room myRoom = null;
 
     private DatabaseReference matchingRef = null;
+    private DatabaseReference userInfoRef = null;
 
     protected override bool Init()
     {
@@ -66,13 +72,27 @@ public class UI_LobbyPopup : UI_Popup
         Get<Button>((int)Buttons.RankingButton).gameObject.BindEvent(OnClickRankingButton);
         Get<Button>((int)Buttons.RankMatchButton).gameObject.BindEvent(OnClickRankMatchButton);
         Get<Button>((int)Buttons.CreateRoomButton).gameObject.BindEvent(OnClickCreateRoomButton);
+        Get<Button>((int)Buttons.LogoutButton).gameObject.BindEvent(SignOut);
+        Get<Button>((int)Buttons.QuitButton).gameObject.BindEvent(OnClickQuitButton);
+
+        Get<GameObject>((int)GameObjects.Menu).SetActive(false);
+        Get<GameObject>((int)GameObjects.Matching).SetActive(false);
 
         matchingRef = Manager.Data.DB.GetReference(Matching.Root);
+        userInfoRef = Manager.Data.DB.GetReference(UserInfo.Root);
+
+        InformationInit();
 
         return true;
     }
 
-    private void OnClickMenuButton() { Debug.Log("메뉴버튼"); }
+    private void OnClickMenuButton()
+    {
+        GameObject menu = Get<GameObject>((int)GameObjects.Menu);
+        menu.SetActive(menu.activeSelf == false);
+    }
+
+    private void OnClickQuitButton() { Application.Quit(); }
 
     private void OnClickRankBattleButton() { ActiveDisplay(GameObjects.RankBattleDisplay); }
 
@@ -85,6 +105,7 @@ public class UI_LobbyPopup : UI_Popup
     private void OnClickRankMatchButton()
     {
         // 테스트 일단 취소는 안됨
+        Get<GameObject>((int)GameObjects.Matching).SetActive(true);
         Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(false);
 
         Manager.Data.DB.GetReference(Matching.Root).GetValueAsync().ContinueWithOnMainThread(FindMatch);
@@ -190,6 +211,7 @@ public class UI_LobbyPopup : UI_Popup
         {
             // 취소
             Debug.Log("불러오기 취소됨");
+            Get<GameObject>((int)GameObjects.Matching).SetActive(false);
             Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(true);
             return;
         }
@@ -197,17 +219,16 @@ public class UI_LobbyPopup : UI_Popup
         {
             // 실패
             Debug.Log("불러오기 실패함");
+            Get<GameObject>((int)GameObjects.Matching).SetActive(false);
             Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(true);
             return;
         }
 
-        DataSnapshot snapshot = task.Result;
-        string json = snapshot.GetRawJsonValue();
+        string json = task.Result.GetRawJsonValue();
         Matching matching = JsonUtility.FromJson<Matching>(json);
 
         if (matching == null)
         {
-            Debug.Log("데이터 자체가 없음");
             matching = new Matching();
         }
 
@@ -276,7 +297,6 @@ public class UI_LobbyPopup : UI_Popup
 
     private void OnMatch(object obj, ValueChangedEventArgs args)
     {
-
         string json = args.Snapshot.GetRawJsonValue();
 
         Matching matching = JsonUtility.FromJson<Matching>(json);
@@ -289,12 +309,12 @@ public class UI_LobbyPopup : UI_Popup
             myRoomKey = null;
 
             matchingRef.ValueChanged -= OnMatch;
+            Get<GameObject>((int)GameObjects.Matching).SetActive(false);
             Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(true);
             return;
         }
 
-        // 2P만 들어감
-        if (matching.krp[myRoomKey].canStart)
+        if (matching.krp[myRoomKey].canStart && Manager.Data.Auth.CurrentUser.UserId == myRoom.uids[1])
         {
             // 두명 전부 완료된 상황
             // 1P는 이미 전투 진입완료
@@ -304,13 +324,14 @@ public class UI_LobbyPopup : UI_Popup
             matching.ChangeStructure(false);
         }
         // 1P만 들어감
-        else if (matching.krp[myRoomKey].isFull && matching.krp[myRoomKey].canStart == false)
+        else if (matching.krp[myRoomKey].isFull &&
+            matching.krp[myRoomKey].canStart == false &&
+            Manager.Data.Auth.CurrentUser.UserId == myRoom.uids[0])
         {
             // 2P가 방에 들어온 상황
             // 1P는 2P가 들어온 것을 확인하고 밴픽화면으로 진입
 
             matching.krp[myRoomKey].canStart = true;
-            matching.ChangeStructure(false);
 
             // 나의 방 정보 최신화
             myRoom = matching.krp[myRoomKey];
@@ -341,9 +362,64 @@ public class UI_LobbyPopup : UI_Popup
             Debug.Log($"매칭 완료됨, 1P : {myRoom.uids[0]}, 2P : {myRoom.uids[1]}");
 
             Manager.Game.SetRoomInfo(myRoom);
-            Manager.UI.ClosePopupUI(this);
-            Manager.UI.ShowPopupUI<UI_BanPickPopup>();
+            StartCoroutine(ToBanPickRoutine());
         });
+    }
+
+    private IEnumerator ToBanPickRoutine()
+    {
+        yield return new WaitForSeconds(2f);
+        Manager.UI.ClosePopupUI(this);
+        Manager.UI.ShowPopupUI<UI_BanPickPopup>();
+    }
+
+    private void InformationInit()
+    {
+        string userID = Manager.Data.Auth.CurrentUser.UserId;
+        userInfoRef.Child(userID).GetValueAsync().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCanceled)
+            {
+                // 불러오기 취소 처음 화면으로
+                SignOut();
+                return;
+            }
+            else if (task.IsFaulted)
+            {
+                // 불러오기 실패 처음 화면으로
+                SignOut();
+                return;
+            }
+            DataSnapshot snapshot = task.Result;
+            string json = snapshot.GetRawJsonValue();
+
+            UserInfo userInfo = JsonUtility.FromJson<UserInfo>(json);
+            if (userInfo == null)
+            {
+                int[] newLog = { 0, 0 };
+                int rand = UnityEngine.Random.Range(0, 1000);
+                userInfo = new UserInfo() { nickName = $"new{rand}", rankPoint = 0, log = newLog, isConnect = true };
+
+                string newJson = JsonUtility.ToJson(userInfo);
+                userInfoRef.Child(userID).SetRawJsonValueAsync(newJson);
+            }
+
+            Get<TMP_Text>((int)Texts.ProfileImageText).text = userInfo.nickName;
+            Get<TMP_Text>((int)Texts.LogInfoText).text = $"{userInfo.log[0]}승 / {userInfo.log[1]}패";
+            Get<TMP_Text>((int)Texts.RankPointText).text = $"점수 : {userInfo.rankPoint}";
+
+            Manager.Game.SetMyInfo(userInfo);
+
+            var send = new Dictionary<string, object> { { "isConnect", true } };
+            userInfoRef.Child(userID).UpdateChildrenAsync(send);
+        });
+    }
+
+    private void SignOut()
+    {
+        Manager.Data.Auth.SignOut();
+        Manager.UI.ClosePopupUI(this);
+        Manager.UI.ShowPopupUI<UI_TitlePopup>();
     }
 }
 
@@ -362,7 +438,7 @@ public class Matching
     /// <summary>
     /// true : list => dictionary, false : dictionary => list
     /// </summary>
-    /// <param name="listToDictionary"></param>
+    /// <param nickName="listToDictionary"></param>
     public void ChangeStructure(bool listToDictionary)
     {
         if (listToDictionary)
@@ -400,4 +476,18 @@ public class Room
     }
 
     public Room() { /*테스트용*/}
+}
+
+[Serializable]
+public class UserInfo
+{
+    public const string Root = "UserInfo/";
+
+    public string nickName;
+    public int rankPoint;
+    /// <summary>
+    /// idx : 0 = win, 1 = defeat
+    /// </summary>
+    public int[] log;
+    public bool isConnect;
 }

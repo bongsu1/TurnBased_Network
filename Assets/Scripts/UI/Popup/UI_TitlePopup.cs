@@ -24,6 +24,27 @@ public class UI_TitlePopup : UI_Popup
         ShowPWButton,
     }
 
+    private void Update()
+    {
+        if (_init == false)
+            return;
+
+        if (Get<TMP_InputField>((int)InputFields.IDInputField).isFocused)
+        {
+            if (Input.GetKeyDown(KeyCode.Tab))
+            {
+                Get<TMP_InputField>((int)InputFields.PasswordInputField).ActivateInputField();
+            }
+        }
+        else if (Get<TMP_InputField>((int)InputFields.PasswordInputField).isFocused)
+        {
+            if (Input.GetKey(KeyCode.Tab) && Input.GetKey(KeyCode.LeftShift))
+            {
+                Get<TMP_InputField>((int)InputFields.IDInputField).ActivateInputField();
+            }
+        }
+    }
+
     protected override bool Init()
     {
         if (base.Init() == false)
@@ -63,31 +84,10 @@ public class UI_TitlePopup : UI_Popup
 
     private void OnClickSignupButton()
     {
-        // 회원 가입 창 띄우기로 변경해야함
-
-        string email = Get<TMP_InputField>((int)InputFields.IDInputField).text;
-        string password = Get<TMP_InputField>((int)InputFields.PasswordInputField).text;
-
         if (Manager.Data.IsVaild == false)
             return;
 
-        Manager.Data.Auth.CreateUserWithEmailAndPasswordAsync(email, password).ContinueWithOnMainThread(task =>
-        {
-            if (task.IsCanceled)
-            {
-                Debug.LogError("가입 취소");
-                return;
-            }
-            if (task.IsFaulted)
-            {
-                Debug.LogError($"가입 실패: {task.Exception}");
-                return;
-            }
-
-            // Firebase user has been created.
-            AuthResult result = task.Result;
-            Debug.Log($"가입 성공: {result.User.DisplayName} ({result.User.UserId})");
-        });
+        Manager.UI.ShowPopupUI<UI_SignupPopup>();
     }
 
     private void OnClickShowPWButton()

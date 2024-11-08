@@ -51,6 +51,16 @@ public class Manager : MonoBehaviour
 
     private void OnApplicationQuit()
     {
+        if (s_dataManager.IsVaild == false)
+            return;
+
+        if (s_dataManager.Auth.CurrentUser == null)
+            return;
+
+        string uid = s_dataManager.Auth.CurrentUser.UserId;
+        var send = new Dictionary<string, object> { { "isConnect", false } };
+        s_dataManager.DB.GetReference(UserInfo.Root).Child(uid).UpdateChildrenAsync(send);
+
         s_dataManager.Auth.SignOut();
     }
 }

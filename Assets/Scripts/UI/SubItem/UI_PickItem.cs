@@ -45,5 +45,11 @@ public class UI_PickItem : UI_Base
             return;
 
         Get<TMP_Text>((int)Texts.CharacterNameText).text = data.charName;
+
+        // 테스트
+        if (data.frontImage != null)
+        {
+            Get<Image>((int)Images.CharacterImage).sprite = data.frontImage;
+        }
     }
 }
