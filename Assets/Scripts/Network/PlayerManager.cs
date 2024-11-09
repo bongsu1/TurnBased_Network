@@ -17,19 +17,17 @@ public class PlayerManager
         foreach (var go in player.players)
         {
             GameObject ob = Object.Instantiate(obj) as GameObject;
-            Player clone;
             if (go.isSelf)
             {
                 _player = ob.AddComponent<Mine>();
-                clone = _player;
+                _player.ID = go.playerId;
             }
             else
             {
                 Player other = ob.AddComponent<Player>();
-                clone = other;
+                other.ID = go.playerId;
                 _players.Add(go.playerId, other);
             }
-            clone.ID = go.playerId;
         }
     }
 
