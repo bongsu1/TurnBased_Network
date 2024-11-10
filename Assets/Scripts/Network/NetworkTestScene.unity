@@ -1509,7 +1509,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5a1ae1a89acb0f842b906f444da82004, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  connect: 0
+  connect: 1
   domainName: 
 --- !u!1 &2013128836
 GameObject:

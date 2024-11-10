@@ -26,14 +26,14 @@ public class PacketManager
         _handler.Add((ushort)PacketID.S_BroadcastEnterGame, PacketHandler.S_BroadcastEnterGameHandler);
        _makeFunc.Add((ushort)PacketID.S_BroadcastLeaveGame, MakePacket<S_BroadcastLeaveGame>);
         _handler.Add((ushort)PacketID.S_BroadcastLeaveGame, PacketHandler.S_BroadcastLeaveGameHandler);
-       _makeFunc.Add((ushort)PacketID.S_BroadcastMove, MakePacket<S_BroadcastMove>);
-        _handler.Add((ushort)PacketID.S_BroadcastMove, PacketHandler.S_BroadcastMoveHandler);
        _makeFunc.Add((ushort)PacketID.S_PlayerList, MakePacket<S_PlayerList>);
         _handler.Add((ushort)PacketID.S_PlayerList, PacketHandler.S_PlayerListHandler);
        _makeFunc.Add((ushort)PacketID.S_BanPick, MakePacket<S_BanPick>);
         _handler.Add((ushort)PacketID.S_BanPick, PacketHandler.S_BanPickHandler);
        _makeFunc.Add((ushort)PacketID.S_PickUp, MakePacket<S_PickUp>);
         _handler.Add((ushort)PacketID.S_PickUp, PacketHandler.S_PickUpHandler);
+       _makeFunc.Add((ushort)PacketID.S_LastBanPick, MakePacket<S_LastBanPick>);
+        _handler.Add((ushort)PacketID.S_LastBanPick, PacketHandler.S_LastBanPickHandler);
        _makeFunc.Add((ushort)PacketID.S_Attck, MakePacket<S_Attck>);
         _handler.Add((ushort)PacketID.S_Attck, PacketHandler.S_AttckHandler);
        _makeFunc.Add((ushort)PacketID.S_Chat, MakePacket<S_Chat>);

@@ -20,6 +20,11 @@ public class PlayerManager
         Debug.Log($"Enter Player ID : {p.playerId}");
     }
 
+    public void LastBan(S_LastBanPick p)
+    {
+        Debug.Log($"LastBan : {p.lastBanIdx}");
+    }
+
     public void GetPick(S_PickUp p)
     {
         Debug.Log($"Pick : {p.pickIdx}");

@@ -28,13 +28,6 @@ internal class PacketHandler
         PlayerManager.Instance.Enter(p);
     }
 
-    public static void S_BroadcastMoveHandler(PacketSession session, IPacket packet)
-    {
-        S_BroadcastMove p = packet as S_BroadcastMove;
-        ServerSession serverSession = session as ServerSession;
-
-        //PlayerManager.Instance.Move(p);
-    }
 
     public static void S_PlayerListHandler(PacketSession session, IPacket packet)
     {
@@ -49,6 +42,13 @@ internal class PacketHandler
         S_BanPick p = packet as S_BanPick;
         ServerSession serverSession = session as ServerSession;
         PlayerManager.Instance.BanPick(p);
+    }
+
+    public static void S_LastBanPickHandler(PacketSession session, IPacket packet)
+    {
+        S_LastBanPick p = packet as S_LastBanPick;
+        ServerSession serverSession = session as ServerSession;
+        PlayerManager.Instance.LastBan(p);
     }
 
     public static void S_PickUpHandler(PacketSession session, IPacket packet)
