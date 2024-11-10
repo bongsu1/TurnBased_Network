@@ -10,39 +10,51 @@ public class PlayerManager
     Dictionary<int, Player> _players = new();
 
     private PlayerManager() { }
+    public void Leave(S_BroadcastLeaveGame p)
+    {
+        Debug.Log($"LeaveGame : {p.playerId}");
+    }
 
-    public void Add(S_PlayerList player)
+    public void Enter(S_BroadcastEnterGame p)
+    {
+        Debug.Log($"Enter Player ID : {p.playerId}");
+    }
+
+    public void GetPick(S_PickUp p)
+    {
+        Debug.Log($"Pick : {p.pickIdx}");
+    }
+
+    public void BanPick(S_BanPick p)
+    {
+        Debug.Log($"Ban : {p.banId}");
+    }
+
+    public void Attack(S_Attck p)
+    {
+        Debug.Log($"Attack Index : {p.atckId}, Skill : {p.skillId},Damager {p.damValue}");
+    }
+
+    public void Result(S_Result p)
+    {
+        Debug.Log($"EndGame");
+    }
+
+
+    public void Chat(S_Chat p)
+    {
+        Debug.Log($"{p.playerId} : {p.chat}");
+    }
+
+    public void PlayerList(S_PlayerList player)
     {
         Object obj = Resources.Load("Player");
         foreach (var go in player.players)
         {
-            GameObject ob = Object.Instantiate(obj) as GameObject;
-            if (go.isSelf)
-            {
-                _player = ob.AddComponent<Mine>();
-                _player.ID = go.playerId;
-            }
-            else
-            {
-                Player other = ob.AddComponent<Player>();
-                other.ID = go.playerId;
-                _players.Add(go.playerId, other);
-            }
+            Debug.Log($"PlayerList ID: {go.playerId}, Its Mine {go.isSelf}");
         }
     }
 
-    public void EnterGame(S_BroadcastEnterGame p)
-    {
-        if(p.playerId == _player.ID)
-        {
-            return;
-        }
-        Object obj = Resources.Load("Player");
-        GameObject ob = Object.Instantiate(obj) as GameObject;
-
-        Player other = ob.AddComponent<Player>();
-        _players.Add(p.playerId, other);
-    }
 
     public void LeaveGame(S_BroadcastLeaveGame p)
     {
@@ -61,20 +73,5 @@ public class PlayerManager
         }
     }
 
-    public void Move(S_BroadcastMove p)
-    {
-        Vector3 pos = new(p.posX, p.posY, p.posZ);
-        if (_player.ID == p.playerId)
-        {
-            _player.MoveDir = pos;
-        }
-        else
-        {
-            if (_players.TryGetValue(p.playerId, out Player player))
-            {
-                player.MoveDir = pos;
-            }
-        }
-    }
 
 }

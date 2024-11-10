@@ -1,5 +1,6 @@
 using DummyClient;
 using ServerCore;
+using System;
 using UnityEngine;
 
 internal class PacketHandler
@@ -8,7 +9,7 @@ internal class PacketHandler
     {
         S_Chat p = packet as S_Chat;
         ServerSession serverSession = session as ServerSession;
-        Debug.Log($"{p.playerId} : {p.chat}");
+        PlayerManager.Instance.Chat(p);
     }
 
     public static void S_BroadcastLeaveGameHandler(PacketSession session, IPacket packet)
@@ -24,50 +25,51 @@ internal class PacketHandler
         S_BroadcastEnterGame p = packet as S_BroadcastEnterGame;
         ServerSession serverSession = session as ServerSession;
 
-        PlayerManager.Instance.EnterGame(p);
+        PlayerManager.Instance.Enter(p);
     }
+
     public static void S_BroadcastMoveHandler(PacketSession session, IPacket packet)
     {
         S_BroadcastMove p = packet as S_BroadcastMove;
         ServerSession serverSession = session as ServerSession;
 
-        PlayerManager.Instance.Move(p);
+        //PlayerManager.Instance.Move(p);
     }
+
     public static void S_PlayerListHandler(PacketSession session, IPacket packet)
     {
         S_PlayerList p = packet as S_PlayerList;
         ServerSession serverSession = session as ServerSession;
 
-        PlayerManager.Instance.Add(p);
+        PlayerManager.Instance.PlayerList(p);
     }
-
-
 
     public static void S_BanPickHandler(PacketSession session, IPacket packet)
     {
         S_BanPick p = packet as S_BanPick;
         ServerSession serverSession = session as ServerSession;
+        PlayerManager.Instance.BanPick(p);
     }
 
     public static void S_PickUpHandler(PacketSession session, IPacket packet)
     {
         S_PickUp p = packet as S_PickUp;
         ServerSession serverSession = session as ServerSession;
-
+        PlayerManager.Instance.GetPick(p);
     }
 
     public static void S_AttckHandler(PacketSession session, IPacket packet)
     {
         S_Attck p = packet as S_Attck;
         ServerSession serverSession = session as ServerSession;
-
+        PlayerManager.Instance.Attack(p);
     }
 
     public static void S_ResultHandler(PacketSession session, IPacket packet)
     {
         S_Result p = packet as S_Result;
         ServerSession serverSession = session as ServerSession;
-
+        PlayerManager.Instance.Result(p);
     }
 
 }

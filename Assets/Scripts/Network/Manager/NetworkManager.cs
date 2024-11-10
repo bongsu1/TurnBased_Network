@@ -13,6 +13,7 @@ public class NetworkManager : MonoBehaviour
     Connector _connect;
     ServerSession _session;
 
+
     public void Send(ArraySegment<byte> sendBuff)
     {
         if (SessionState())
@@ -21,7 +22,81 @@ public class NetworkManager : MonoBehaviour
         }
     }
 
-    IPAddress[] ConnectAddress(Define.Connect connect)
+
+    void Start()
+    {
+        Connect();
+    }
+    private void Update()
+    {
+        GetPacket();
+    }
+    public void EndGame()
+    {
+        Send(new C_EndGame().Write());
+    }
+
+    public void Atck()
+    {
+        C_Attck p = new C_Attck() { atckId = 2, damValue = 3, skillId = 4 };
+        Send(p.Write());
+    }
+    public void Ban()
+    {
+        C_BanPick p = new C_BanPick() { banId = 2 };
+        Send(p.Write());
+    }
+    public void Pick()
+    {
+        C_PickUp p = new C_PickUp() { pickIdx = 5 };
+        Send(p.Write());
+    }
+
+
+
+
+
+    private void OnDestroy()
+    {
+        Disconnect();
+    }
+
+    public void Disconnect()
+    {
+        if (_connect != null)
+        {
+            _connect.Disconnect();
+        }
+    }
+
+    private void GetPacket()
+    {
+        IPacket[] ps = PacketQueue.Instance.PopAll();
+        if (ps != null)
+        {
+            foreach (var p in ps)
+            {
+                PacketManager.Instance.HandlePacket(_session, p);
+            }
+        }
+    }
+
+    private bool SessionState()
+    {
+        if (_session == null)
+        {
+            Debug.Log("Session Is null");
+            return false;
+        }
+        if (_session.State != Define.ConnectState.Connect)
+        {
+            Debug.Log($"Session Is {_session.State}");
+            return false;
+        }
+        return true;
+    }
+
+    IPAddress[] GetAddress(Define.Connect connect)
     {
         string str;
         switch (connect)
@@ -41,9 +116,10 @@ public class NetworkManager : MonoBehaviour
         return Dns.GetHostAddresses(str);
     }
 
-    void Start()
+
+    public void Connect()
     {
-        IPAddress[] addresses = ConnectAddress(connect);
+        IPAddress[] addresses = GetAddress(connect);
 
         bool enter = false;
         try
@@ -76,38 +152,6 @@ public class NetworkManager : MonoBehaviour
         {
             Console.WriteLine(e.Message);
         }
-    }
-
-    private void Update()
-    {
-        IPacket[] ps = PacketQueue.Instance.PopAll();
-        if (ps != null)
-        {
-            foreach (var p in ps)
-            {
-                PacketManager.Instance.HandlePacket(_session, p);
-            }
-        }
-    }
-
-    private void OnDestroy()
-    {
-        _connect.Disconnect();
-    }
-
-    private bool SessionState()
-    {
-        if (_session == null)
-        {
-            Debug.Log("Session Is null");
-            return false;
-        }
-        if (_session.State != Define.ConnectState.Connect)
-        {
-            Debug.Log($"Session Is {_session.State}");
-            return false;
-        }
-        return true;
     }
 
 }
