@@ -16,23 +16,11 @@ public class GameManager
         }
     }
 
-    private Room roomInfo = null;
-    public Room RoomInfo
-    {
-        get
-        {
-            // 테스트용
-            if (roomInfo == null)
-            {
-                string[] testID = { "1P", "2P" };
-                roomInfo = new Room() { key = "Test Key", uids = testID };
-            }
-            return roomInfo;
-        }
-    }
-
     private CharacterDictionary characterDictionary = null;
     public CharacterDictionary CharacterDictionary { get { return characterDictionary; } }
+
+    private bool isFirst = false;
+    public bool IsFirst { get { return isFirst; } set { isFirst = value; } }
 
     private List<int>[] inBattleList = new List<int>[2];
 
@@ -44,11 +32,6 @@ public class GameManager
     public void SetMyInfo(UserInfo userInfo)
     {
         myInfo = userInfo;
-    }
-
-    public void SetRoomInfo(Room room)
-    {
-        roomInfo = room;
     }
 
     public void SetPickList(List<int> firstPickList, List<int> secondPickList)

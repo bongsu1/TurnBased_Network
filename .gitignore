@@ -70,7 +70,7 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
-Assets/Imports
-/Assets/Plugins
+/Assets/Imports
 /Assets/StreamingAssets/google-services-desktop.json
 /Assets/StreamingAssets/google-services.json
+/Assets/Plugins

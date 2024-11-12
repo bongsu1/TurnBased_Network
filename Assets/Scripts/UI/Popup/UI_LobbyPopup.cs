@@ -3,8 +3,6 @@ using Firebase.Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -45,13 +43,11 @@ public class UI_LobbyPopup : UI_Popup
         ProfileImageText,
         RankPointText,
         LogInfoText, // 전적 텍스트
+        RankMatchButtonText,
     }
 
-    private string myRoomKey = null;
-    private Room myRoom = null;
-
-    private DatabaseReference matchingRef = null;
     private DatabaseReference userInfoRef = null;
+    private bool isMatching = false;
 
     protected override bool Init()
     {
@@ -78,7 +74,6 @@ public class UI_LobbyPopup : UI_Popup
         Get<GameObject>((int)GameObjects.Menu).SetActive(false);
         Get<GameObject>((int)GameObjects.Matching).SetActive(false);
 
-        matchingRef = Manager.Data.DB.GetReference(Matching.Root);
         userInfoRef = Manager.Data.DB.GetReference(UserInfo.Root);
 
         InformationInit();
@@ -104,13 +99,24 @@ public class UI_LobbyPopup : UI_Popup
 
     private void OnClickRankMatchButton()
     {
-        // 테스트 일단 취소는 안됨
-        Get<GameObject>((int)GameObjects.Matching).SetActive(true);
+        Get<GameObject>((int)GameObjects.Matching).SetActive(isMatching == false);
         Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(false);
 
-        Manager.Data.DB.GetReference(Matching.Root).GetValueAsync().ContinueWithOnMainThread(FindMatch);
+        if (isMatching == false)
+            Manager.Network.Connect();
+        else
+            Manager.Network.Disconnect();
 
-        // 매칭중일 때 매칭 버튼을 다시 클릭하면 매칭 취소하는 기능 추가
+        isMatching = isMatching == false;
+        StartCoroutine(WaitConnectRoutine());
+    }
+
+    private IEnumerator WaitConnectRoutine()
+    {
+        string buttonText = isMatching ? "취소" : "전투 신청";
+        Get<TMP_Text>((int)Texts.RankMatchButtonText).text = buttonText;
+        yield return new WaitForSeconds(2f);
+        Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(true);
     }
 
     private void OnClickCreateRoomButton() { Debug.Log("방만들기버튼"); }
@@ -203,176 +209,6 @@ public class UI_LobbyPopup : UI_Popup
         }
     }
 
-    private void FindMatch(Task<DataSnapshot> task)
-    {
-        string uid = Manager.Data.Auth.CurrentUser.UserId;
-
-        if (task.IsCanceled)
-        {
-            // 취소
-            Debug.Log("불러오기 취소됨");
-            Get<GameObject>((int)GameObjects.Matching).SetActive(false);
-            Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(true);
-            return;
-        }
-        else if (task.IsFaulted)
-        {
-            // 실패
-            Debug.Log("불러오기 실패함");
-            Get<GameObject>((int)GameObjects.Matching).SetActive(false);
-            Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(true);
-            return;
-        }
-
-        string json = task.Result.GetRawJsonValue();
-        Matching matching = JsonUtility.FromJson<Matching>(json);
-
-        if (matching == null)
-        {
-            matching = new Matching();
-        }
-
-        matching.ChangeStructure(true);
-
-        for (int i = 0; i < matching.rooms.Count; i++)
-        {
-            if (matching.rooms[i].isFull == false)
-            {
-                myRoomKey = matching.rooms[i].key;
-                break;
-            }
-        }
-
-        // 남아 있는 방이 없다
-        if (string.IsNullOrEmpty(myRoomKey))
-        {
-            myRoomKey = matchingRef.Push().Key;
-
-            Room newRoom = new Room(myRoomKey, uid);
-            matching.rooms.Add(newRoom);
-
-            myRoom = newRoom;
-        }
-        // 방이 있다
-        else
-        {
-            matching.krp[myRoomKey].uids[1] = uid;
-            matching.krp[myRoomKey].isFull = true;
-
-            myRoom = matching.krp[myRoomKey];
-            // 매칭완료
-        }
-
-        string newjson = JsonUtility.ToJson(matching);
-        matchingRef.SetRawJsonValueAsync(newjson).ContinueWithOnMainThread(SubscribeValueChange);
-    }
-
-    private void SubscribeValueChange(Task task)
-    {
-        if (task.IsCanceled)
-        {
-            // 취소
-            Debug.Log("참가 취소");
-            myRoomKey = null;
-            myRoom = null;
-
-            Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(true);
-            return;
-        }
-        else if (task.IsFaulted)
-        {
-            // 실패
-            Debug.Log("참가 실패");
-            myRoomKey = null;
-            myRoom = null;
-
-            Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(true);
-            return;
-        }
-
-        Debug.Log("참가 완료");
-        matchingRef.ValueChanged -= OnMatch;
-        matchingRef.ValueChanged += OnMatch;
-    }
-
-    private void OnMatch(object obj, ValueChangedEventArgs args)
-    {
-        string json = args.Snapshot.GetRawJsonValue();
-
-        Matching matching = JsonUtility.FromJson<Matching>(json);
-        matching.ChangeStructure(true);
-
-        // 방이 사라졌을 때
-        if (matching.krp.ContainsKey(myRoomKey) == false)
-        {
-            myRoom = null;
-            myRoomKey = null;
-
-            matchingRef.ValueChanged -= OnMatch;
-            Get<GameObject>((int)GameObjects.Matching).SetActive(false);
-            Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(true);
-            return;
-        }
-
-        if (matching.krp[myRoomKey].canStart && Manager.Data.Auth.CurrentUser.UserId == myRoom.uids[1])
-        {
-            // 두명 전부 완료된 상황
-            // 1P는 이미 전투 진입완료
-            // 2P가 방정리하고 전투 진입하면 됨
-
-            matching.krp.Remove(myRoomKey);
-            matching.ChangeStructure(false);
-        }
-        // 1P만 들어감
-        else if (matching.krp[myRoomKey].isFull &&
-            matching.krp[myRoomKey].canStart == false &&
-            Manager.Data.Auth.CurrentUser.UserId == myRoom.uids[0])
-        {
-            // 2P가 방에 들어온 상황
-            // 1P는 2P가 들어온 것을 확인하고 밴픽화면으로 진입
-
-            matching.krp[myRoomKey].canStart = true;
-
-            // 나의 방 정보 최신화
-            myRoom = matching.krp[myRoomKey];
-        }
-        // 다른 방이 변동되었다면
-        else
-        {
-            return;
-        }
-
-        matchingRef.ValueChanged -= OnMatch;
-        string newJson = JsonUtility.ToJson(matching);
-        matchingRef.SetRawJsonValueAsync(newJson).ContinueWithOnMainThread(task =>
-        {
-            if (task.IsCanceled)
-            {
-                // 취소
-                // 한명이라도 접속을 못 했을 시 실행할 로직
-                return;
-            }
-            else if (task.IsFaulted)
-            {
-                // 실패
-                // 한명이라도 접속을 못 했을 시 실행할 로직
-                return;
-            }
-
-            Debug.Log($"매칭 완료됨, 1P : {myRoom.uids[0]}, 2P : {myRoom.uids[1]}");
-
-            Manager.Game.SetRoomInfo(myRoom);
-            StartCoroutine(ToBanPickRoutine());
-        });
-    }
-
-    private IEnumerator ToBanPickRoutine()
-    {
-        yield return new WaitForSeconds(2f);
-        Manager.UI.ClosePopupUI(this);
-        Manager.UI.ShowPopupUI<UI_BanPickPopup>();
-    }
-
     private void InformationInit()
     {
         string userID = Manager.Data.Auth.CurrentUser.UserId;
@@ -421,61 +257,6 @@ public class UI_LobbyPopup : UI_Popup
         Manager.UI.ClosePopupUI(this);
         Manager.UI.ShowPopupUI<UI_TitlePopup>();
     }
-}
-
-[Serializable]
-public class Matching
-{
-    public const string Root = "Matching/";
-
-    public bool exist;
-    public List<Room> rooms;
-    /// <summary>
-    /// key room pair
-    /// </summary>
-    public Dictionary<string, Room> krp;
-
-    /// <summary>
-    /// true : list => dictionary, false : dictionary => list
-    /// </summary>
-    /// <param nickName="listToDictionary"></param>
-    public void ChangeStructure(bool listToDictionary)
-    {
-        if (listToDictionary)
-        {
-            krp = rooms.ToDictionary(item => item.key);
-        }
-        else
-        {
-            rooms = krp.Values.ToList();
-        }
-    }
-
-    public Matching()
-    {
-        rooms = new List<Room>();
-        exist = true;
-    }
-}
-
-[Serializable]
-public class Room
-{
-    public string key;
-    public string[] uids;
-    public bool isFull;
-    public bool canStart;
-
-    public Room(string key, string uid)
-    {
-        this.key = key;
-        uids = new string[2];
-        uids[0] = uid;
-        isFull = false;
-        canStart = false;
-    }
-
-    public Room() { /*테스트용*/}
 }
 
 [Serializable]

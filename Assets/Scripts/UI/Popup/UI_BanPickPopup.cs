@@ -3,7 +3,7 @@ using Firebase.Extensions;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Threading.Tasks;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,6 +23,7 @@ public class UI_BanPickPopup : UI_Popup
         Other3rdPickedButton,
         Other4thPickedButton,
         Other5thPickedButton,
+        MatchQuitButton,
     }
 
     private enum Images
@@ -66,13 +67,8 @@ public class UI_BanPickPopup : UI_Popup
         OtherRankScoreText,
     }
 
-    private const string pick = "pick";
-    private const string count = "count";
-    private const string pickUp = "pickUp";
-    // 선픽은 항상 플레이어 1
     private bool first = false;
-
-    DatabaseReference pickRef = null;
+    private int[] banInfo = { -1, -1 };
 
     protected override bool Init()
     {
@@ -110,43 +106,19 @@ public class UI_BanPickPopup : UI_Popup
             pickItem.gameObject.BindEvent(() => OnClickPickItem(id));
         }
 
-        Get<Button>((int)Buttons.SelectButton).gameObject.BindEvent(OnClickSelectButton);
-        ActiveSelectButton(false);
-
-        #region 전투방 만들기
-        string roomKey = Manager.Game.RoomInfo.key;
-        string p1 = Manager.Game.RoomInfo.uids[0];
-        string p2 = Manager.Game.RoomInfo.uids[1];
-
-        string myUID = Manager.Data.Auth.CurrentUser.UserId;
-        first = myUID == p1;
-
-        pickRef = Manager.Data.DB.GetReference($"Battles/{roomKey}");
-        // 선픽
-        if (first)
-        {
-            string json = JsonUtility.ToJson(new PickInfo());
-            pickRef.SetRawJsonValueAsync(json);
-        }
-        pickRef.ValueChanged += OnSelectPick;
-        #endregion
-
         Get<TMP_Text>((int)Texts.MyNickNameText).text = Manager.Game.MyInfo.nickName;
         Get<TMP_Text>((int)Texts.MyRankScoreText).text = $"{Manager.Game.MyInfo.rankPoint} 점";
-        Manager.Data.DB.GetReference(UserInfo.Root).Child(first ? p2 : p1)
-            .GetValueAsync().ContinueWithOnMainThread(task =>
-        {
-            if (task.IsCompleted)
-            {
-                string json = task.Result.GetRawJsonValue();
-                UserInfo otherInfo = JsonUtility.FromJson<UserInfo>(json);
-                if (otherInfo == null)
-                    return;
 
-                Get<TMP_Text>((int)Texts.OtherNickNameText).text = otherInfo.nickName;
-                Get<TMP_Text>((int)Texts.OtherRankScoreText).text = $"{otherInfo.rankPoint} 점";
-            }
-        });
+        // 방에 먼저 들어온사람이 선픽
+        first = Manager.Game.IsFirst;
+
+        PlayerManager.Instance.OnSelectPickUp += OnSelectPick;
+        PlayerManager.Instance.OnSelectItem += ShowPickItem;
+
+        Get<Button>((int)Buttons.SelectButton).gameObject.BindEvent(OnClickSelectButton);
+        ActiveSelectButton(first);
+
+        Get<Button>((int)Buttons.MatchQuitButton).gameObject.BindEvent(OnClickQuitMatchButton);
 
         return true;
     }
@@ -182,8 +154,8 @@ public class UI_BanPickPopup : UI_Popup
         currentPickID = selectID;
         ShowPickItem(selectID);
 
-        var send = new Dictionary<string, object> { { pick, currentPickID }, { pickUp, false } };
-        pickRef.UpdateChildrenAsync(send);
+        C_BanPick pickItem = new C_BanPick { banId = (short)selectID };
+        Manager.Network.Send(pickItem.Write());
     }
 
     private void OnClickSelectButton()
@@ -199,45 +171,20 @@ public class UI_BanPickPopup : UI_Popup
             return;
         }
 
-        // 내가 선택중일 때
+        // 내 턴이 아닐 때
         if (firstTurns[turnCount] != first)
             return;
+
+        C_PickUp pickUp = new C_PickUp { pickIdx = (short)currentPickID };
+        Manager.Network.Send(pickUp.Write());
 
         // 선택
         Image myPickedImage = Get<Image>((int)Images.My1stPickedImage + myPickCount);
         TMP_Text myPickedname = Get<TMP_Text>((int)Texts.My1stPickedText + myPickCount);
         ++myPickCount;
 
-        myPickedImage.gameObject.SetActive(true);
-        myPickedname.gameObject.SetActive(true);
-        myPickedImage.sprite = Manager.Game.CharacterDictionary[currentPickID].frontImage;
-        myPickedname.text = Manager.Game.CharacterDictionary[currentPickID].charName;
-
-        pickItems[currentPickID].GetComponent<Button>().interactable = false;
-        pickItems[currentPickID].gameObject.EventActive(false);
-
-        picked.Add(currentPickID);
-        if (first)
-        {
-            firstPickList.Add(currentPickID);
-        }
-        else
-        {
-            secondPickList.Add(currentPickID);
-        }
-
-        var send = new Dictionary<string, object> { { count, turnCount }, { pickUp, true } };
-        pickRef.UpdateChildrenAsync(send);
-
-        ++turnCount;
+        PickUp(myPickedImage, myPickedname, currentPickID, first);
         currentPickID = -1;
-
-        if (turnCount == 10) // 모두 선택했으면
-        {
-            pickRef.ValueChanged -= OnSelectPick;
-            ActiveSelectButton(false);
-            ActiveBanButton(true);
-        }
     }
 
     private void ActiveBanButton(bool active)
@@ -262,11 +209,21 @@ public class UI_BanPickPopup : UI_Popup
 
         ActiveBanButton(false);
 
-        // 상대팀을 밴하는 것이기 때문에 반대로 넣어줌
-        string player = first ? "second" : "first";
-        var send = new Dictionary<string, object> { { player, selectIdx } };
-        pickRef.ValueChanged += OnSelectBan;
-        pickRef.UpdateChildrenAsync(send);
+        int team = first ? 1 : 0;
+        banInfo[team] = selectIdx;
+
+        C_BanPick banPick = new C_BanPick { banId = (short)selectIdx };
+        Manager.Network.Send(banPick.Write());
+
+        EndBan();
+    }
+
+    private void OnClickQuitMatchButton()
+    {
+        Manager.UI.ClosePopupUI(this);
+        Manager.UI.ShowPopupUI<UI_LobbyPopup>();
+
+        Manager.Network.Disconnect();
     }
 
     private void ActiveSelectButton(bool active)
@@ -282,98 +239,57 @@ public class UI_BanPickPopup : UI_Popup
 
         TMP_Text selectedName = Get<TMP_Text>((int)Texts.SelectedNameText);
         Image selectedImage = Get<Image>((int)Images.SelectedImage);
+
         if (selectedImage.gameObject.activeSelf == false)
         {
             selectedImage.gameObject.SetActive(true);
             selectedName.gameObject.SetActive(true);
         }
-        // 테스트 아직 스프라이트가 없는 캐릭터들이 있음
-        if (Manager.Game.CharacterDictionary[id].frontImage != null)
-            selectedImage.sprite = Manager.Game.CharacterDictionary[id].frontImage;
+
+        selectedImage.sprite = Manager.Game.CharacterDictionary[id].frontImage;
         selectedName.text = Manager.Game.CharacterDictionary[id].charName;
     }
 
-    private void OnSelectPick(object obj, ValueChangedEventArgs args)
+    private void OnSelectPick(int pickID)
     {
         if (turnCount == 10)
             return;
 
-        string json = args.Snapshot.GetRawJsonValue();
-        var pickInfo = JsonUtility.FromJson<PickInfo>(json);
+        ShowPickItem(pickID);
 
-        // 현재 자신의 턴 일때만 선택버튼 활성화
-        ActiveSelectButton(firstTurns[turnCount] == first);
+        Image otherPickedImage = Get<Image>((int)Images.Other1stPickedImage + otherPickCount);
+        TMP_Text otherPickedname = Get<TMP_Text>((int)Texts.Other1stPickedText + otherPickCount);
+        ++otherPickCount;
 
-        // 상대 턴일 때만 들어옴
-        if (firstTurns[pickInfo.count] == first)
-            return;
-
-        ShowPickItem(pickInfo.pick);
-
-        // 상대가 선택을 확정한 경우
-        if (pickInfo.pickUp)
-        {
-            Image otherPickedImage = Get<Image>((int)Images.Other1stPickedImage + otherPickCount);
-            TMP_Text otherPickedname = Get<TMP_Text>((int)Texts.Other1stPickedText + otherPickCount);
-            ++otherPickCount;
-
-            otherPickedImage.gameObject.SetActive(true);
-            otherPickedname.gameObject.SetActive(true);
-            otherPickedImage.sprite = Manager.Game.CharacterDictionary[pickInfo.pick].frontImage;
-            otherPickedname.text = Manager.Game.CharacterDictionary[pickInfo.pick].charName;
-
-            pickItems[pickInfo.pick].GetComponent<Button>().interactable = false;
-            pickItems[pickInfo.pick].gameObject.EventActive(false);
-
-            picked.Add(pickInfo.pick);
-
-            // 자신이 첫번째 플레이어일때
-            if (first)
-            {
-                secondPickList.Add(pickInfo.pick);
-            }
-            // 두번째 플레이어일때
-            else
-            {
-                firstPickList.Add(pickInfo.pick);
-            }
-
-            ++turnCount;
-            var send = new Dictionary<string, object> { { count, turnCount }, { pickUp, false } };
-            pickRef.UpdateChildrenAsync(send);
-
-            // 모두 완료된 상황
-            if (turnCount == 10)
-            {
-                pickRef.ValueChanged -= OnSelectPick;
-                ActiveSelectButton(false);
-                ActiveBanButton(true);
-            }
-        }
+        PickUp(otherPickedImage, otherPickedname, pickID, first == false);
     }
 
-    private void OnSelectBan(object obj, ValueChangedEventArgs args)
+    private void OnSelectBan(int banIdx)
     {
-        string json = args.Snapshot.GetRawJsonValue();
-        BanInfo banInfo = JsonUtility.FromJson<BanInfo>(json);
+        int team = first ? 0 : 1;
+        banInfo[team] = banIdx;
 
-        if (banInfo.first == -1 || banInfo.second == -1)
+        EndBan();
+    }
+
+    private void EndBan()
+    {
+        // 양쪽이 모두 끝나야 진행
+        if (banInfo[0] == -1 || banInfo[1] == -1)
             return;
 
-        firstPickList.RemoveAt(banInfo.first);
-        secondPickList.RemoveAt(banInfo.second);
+        firstPickList.RemoveAt(banInfo[0]);
+        secondPickList.RemoveAt(banInfo[1]);
 
-        int ban = first ? banInfo.first : banInfo.second;
+        int ban = first ? banInfo[0] : banInfo[1];
 
         // 테스트
         Get<Image>((int)Images.My1stPicked + ban).color = Color.red;
 
-        pickRef.ValueChanged -= OnSelectBan;
-
+        PlayerManager.Instance.ClearBanEvent();
         Manager.Game.SetPickList(firstPickList, secondPickList);
 
         StartCoroutine(ToBattleRoutine());
-        // 지연 추가
     }
 
     private IEnumerator ToBattleRoutine()
@@ -382,19 +298,47 @@ public class UI_BanPickPopup : UI_Popup
         Manager.UI.ClosePopupUI(this);
         Manager.UI.ShowPopupUI<UI_BattlePopup>();
     }
-}
 
-[Serializable]
-public struct PickInfo
-{
-    public int pick;
-    public int count;
-    public bool pickUp;
-}
+    private void PickUp(Image characterImage, TMP_Text characterNameText, int characterID, bool first)
+    {
+        characterImage.gameObject.SetActive(true);
+        characterNameText.gameObject.SetActive(true);
+        characterImage.sprite = Manager.Game.CharacterDictionary[characterID].frontImage;
+        characterNameText.text = Manager.Game.CharacterDictionary[characterID].charName;
 
-[Serializable]
-public class BanInfo
-{
-    public int first = -1;
-    public int second = -1;
+        pickItems[characterID].GetComponent<Button>().interactable = false;
+        pickItems[characterID].gameObject.EventActive(false);
+
+        picked.Add(characterID);
+
+        // 자신이 첫 번째 플레이어라면 자신이 골랐을때는 첫 팀리스트에, 상대가 고른 경우에는 두 번째 팀 리스트에 추가
+        // 두 번째 플레이어라면 반대로
+        if (first)
+        {
+            firstPickList.Add(characterID);
+        }
+        else
+        {
+            secondPickList.Add(characterID);
+        }
+
+        ++turnCount;
+        if (turnCount < 10)
+        {
+            ActiveSelectButton(firstTurns[turnCount] == this.first);
+        }
+        else
+        {
+            PlayerManager.Instance.ClearSelectEvent();
+            PlayerManager.Instance.OnSelectBan += OnSelectBan;
+            ActiveSelectButton(false);
+            ActiveBanButton(true);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        PlayerManager.Instance.ClearSelectEvent();
+        PlayerManager.Instance.ClearBanEvent();
+    }
 }

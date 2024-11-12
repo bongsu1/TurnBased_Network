@@ -22,6 +22,7 @@ public class UI_BattlePopup : UI_Popup
         Other2ndCharacterButton,
         Other3rdCharacterButton,
         Other4thCharacterButton,
+        MatchQuitButton,
     }
 
     private enum Sliders
@@ -88,11 +89,6 @@ public class UI_BattlePopup : UI_Popup
 
     private int selectSkill = 0; // 스킬을 선택하지 않았을때에도 1번(skills[0]) 스킬을 기본으로
     private bool first = false;
-    DatabaseReference battleRef = null;
-
-    private const string skill = "skill";
-    private const string character = "character";
-    private const string doAct = "doAct";
 
     protected override bool Init()
     {
@@ -112,22 +108,7 @@ public class UI_BattlePopup : UI_Popup
         ActiveSelectImage();
         ActiveSkillButton(false);
 
-
-        #region 배틀방
-        string roomKey = Manager.Game.RoomInfo.key;
-        string myUID = Manager.Data.Auth.CurrentUser.UserId;
-        first = myUID == Manager.Game.RoomInfo.uids[0];
-
-        battleRef = Manager.Data.DB.GetReference($"Battles/{roomKey}");
-
-        if (first)
-        {
-            string Json = JsonUtility.ToJson(new BattleInfo(-1, -1, false));
-            battleRef.SetRawJsonValueAsync(Json);
-
-        }
-        battleRef.ValueChanged += OnTakeDamage;
-        #endregion
+        first = Manager.Game.IsFirst;
 
         for (int i = 0; i < 4; i++)
         {
@@ -141,6 +122,10 @@ public class UI_BattlePopup : UI_Popup
         }
 
         InfomationInit(first);
+
+        PlayerManager.Instance.OnTakeSkill += ActionTurn;
+
+        Get<Button>((int)Buttons.MatchQuitButton).gameObject.BindEvent(OnClickMatchQuitButton);
 
         return true;
     }
@@ -179,23 +164,19 @@ public class UI_BattlePopup : UI_Popup
     {
         // 두번이상 클릭 방지
         ActiveCharacterButton(SkillData.Target.None);
-        var send = new Dictionary<string, object> { { skill, selectSkill }, { character, selectCharacter }, { doAct, true } };
 
-        battleRef.UpdateChildrenAsync(send).ContinueWithOnMainThread(task =>
-        {
-            if (task.IsCanceled)
-            {
-                // 취소
-                ActiveCharacterButton(curTurn.data.skills[selectSkill].target);
-            }
-            else if (task.IsFaulted)
-            {
-                // 실패
-                ActiveCharacterButton(curTurn.data.skills[selectSkill].target);
-            }
+        ActionTurn(selectCharacter, selectSkill);
 
-            ActionTurn(selectSkill, selectCharacter);
-        });
+        C_Attck attack = new C_Attck { atckId = (short)selectCharacter, skillId = (short)selectSkill };
+        Manager.Network.Send(attack.Write());
+    }
+
+    private void OnClickMatchQuitButton()
+    {
+        Manager.UI.ClosePopupUI(this);
+        Manager.UI.ShowPopupUI<UI_LobbyPopup>();
+
+        Manager.Network.Disconnect();
     }
 
     /// <summary>
@@ -425,15 +406,11 @@ public class UI_BattlePopup : UI_Popup
 
             ActiveSkillButton(false);
 
-            battleRef.ValueChanged -= OnTakeDamage;
-            if (g_state == GameState.OtherWin)
-            {
-                battleRef.SetValueAsync(null);
-            }
+            Manager.Network.Disconnect();
 
             // 전투 정보 초기화
-            Manager.Game.SetRoomInfo(null);
             Manager.Game.SetPickList(null, null);
+            PlayerManager.Instance.ClearSkillEvent();
 
             RecordBattle();
             StartCoroutine(EndRoutine());
@@ -447,6 +424,11 @@ public class UI_BattlePopup : UI_Popup
 
         SetActionGaugeUI();
         BattleCharacter curTurn = turnQue.Dequeue();
+
+        // 지금 턴을 잡은 캐릭터가 이미 전투불능이라면
+        if (curTurn.IsLive == false)
+            return TakeTurn();
+
         for (int i = 0; i < 3; i++)
         {
             int idx = i;
@@ -515,25 +497,7 @@ public class UI_BattlePopup : UI_Popup
         }
     }
 
-    private void OnTakeDamage(object obj, ValueChangedEventArgs args)
-    {
-        // 상대 턴일때만 로직 실행
-        if (g_state != GameState.OtherTurn)
-            return;
-
-        string json = args.Snapshot.GetRawJsonValue();
-        BattleInfo battleInfo = JsonUtility.FromJson<BattleInfo>(json);
-
-        if (battleInfo.doAct == false || battleInfo.skill < 0 || battleInfo.character < 0)
-            return;
-
-        ActionTurn(battleInfo.skill, battleInfo.character);
-
-        var send = new Dictionary<string, object> { { doAct, false } };
-        battleRef.UpdateChildrenAsync(send);
-    }
-
-    private void ActionTurn(int selectSkill, int selectCharacter)
+    private void ActionTurn(int selectCharacter, int selectSkill)
     {
         inBattle[selectCharacter].CurHP -= curTurn.data.skills[selectSkill].damage;
 
@@ -545,6 +509,11 @@ public class UI_BattlePopup : UI_Popup
             return;
 
         ActiveSkillButton(g_state == GameState.MyTurn);
+    }
+
+    private void OnDestroy()
+    {
+        PlayerManager.Instance.ClearSkillEvent();
     }
 }
 
@@ -599,19 +568,3 @@ public class BattleCharacter
         this.team = team;
     }
 }
-
-[Serializable]
-public struct BattleInfo
-{
-    public int skill;
-    public int character;
-    public bool doAct;
-
-    public BattleInfo(int skill, int character, bool doAct)
-    {
-        this.skill = skill;
-        this.character = character;
-        this.doAct = doAct;
-    }
-}
-
