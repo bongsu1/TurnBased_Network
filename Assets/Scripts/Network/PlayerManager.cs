@@ -21,6 +21,11 @@ public class PlayerManager
     /// first int : charIdx, second int : skillIdx
     /// </summary>
     public event Action<int, int> OnTakeSkill;
+
+    public void ClearLeaveEvnet()
+    {
+        OnLeaveRoom = null;
+    }
     #endregion
 
     public void Leave(S_BroadcastLeaveGame p)
@@ -86,26 +91,8 @@ public class PlayerManager
 
     public void LeaveGame(S_BroadcastLeaveGame p)
     {
-        Debug.Log("LeaveGame0");
-        if (_player.ID == p.playerId)
-        {
-            Debug.Log("LeaveGame1");
-            GameObject.Destroy(_player.gameObject);
-            _player = null;
-        }
-        else
-        {
-            Debug.Log("LeaveGame2");
-            if (_players.TryGetValue(p.playerId, out Player player))
-            {
-                Debug.Log("LeaveGame3");
-                GameObject.Destroy(player.gameObject);
-                _players.Remove(p.playerId);
-            }
-        }
+        Debug.Log($"Leave Player ID : {p.playerId}");
 
-        Debug.Log("LeaveGame4");
+        OnLeaveRoom?.Invoke();
     }
-
-
 }

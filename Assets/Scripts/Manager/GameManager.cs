@@ -5,16 +5,7 @@ using UnityEngine;
 public class GameManager
 {
     private UserInfo myInfo = null;
-    public UserInfo MyInfo
-    {
-        get
-        {
-            // 테스트용
-            if (myInfo == null)
-                myInfo = new UserInfo() { nickName = "1P", rankPoint = 1010 };
-            return myInfo;
-        }
-    }
+    public UserInfo MyInfo { get { return myInfo; } }
 
     private CharacterDictionary characterDictionary = null;
     public CharacterDictionary CharacterDictionary { get { return characterDictionary; } }

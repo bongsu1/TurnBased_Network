@@ -22,6 +22,7 @@ public class UI_NetworkNotification : UI_Popup
 
     private void OnClickBG()
     {
-        Manager.UI.ClosePopupUI(this);
+        Manager.UI.ClearPopupUI();
+        Manager.UI.ShowPopupUI<UI_LobbyPopup>();
     }
 }

@@ -25,11 +25,12 @@ public class UI_LobbyPopup : UI_Popup
     private enum GameObjects
     {
         RankBattleDisplay,
-        MockBattleDisplay,
+        MockBattleDisplay, // 원래는 모의전으로 만들려고 했으나 지금은 소통게시판
         BattleLogDisplay,
         RankingDisplay,
         Menu,
         Matching,
+        PostContent,
     }
 
     private enum Images
@@ -46,8 +47,25 @@ public class UI_LobbyPopup : UI_Popup
         RankMatchButtonText,
     }
 
+    private enum InputFields
+    {
+        PostInputField,
+    }
+
     private DatabaseReference userInfoRef = null;
     private bool isMatching = false;
+
+    private DatabaseReference communityRef = null;
+    private Queue<UI_Post> postQue = new Queue<UI_Post>(10);
+
+    private void Update()
+    {
+        if (Input.GetKeyDown(KeyCode.Return) &&
+            Get<GameObject>((int)GameObjects.MockBattleDisplay).activeSelf)
+        {
+            OnClickCreateRoomButton();
+        }
+    }
 
     protected override bool Init()
     {
@@ -58,6 +76,7 @@ public class UI_LobbyPopup : UI_Popup
         Bind<GameObject>(typeof(GameObjects));
         Bind<Image>(typeof(Images));
         Bind<TMP_Text>(typeof(Texts));
+        Bind<TMP_InputField>(typeof(InputFields));
 
         ActiveDisplay(GameObjects.RankBattleDisplay);
 
@@ -68,7 +87,7 @@ public class UI_LobbyPopup : UI_Popup
         Get<Button>((int)Buttons.RankingButton).gameObject.BindEvent(OnClickRankingButton);
         Get<Button>((int)Buttons.RankMatchButton).gameObject.BindEvent(OnClickRankMatchButton);
         Get<Button>((int)Buttons.CreateRoomButton).gameObject.BindEvent(OnClickCreateRoomButton);
-        Get<Button>((int)Buttons.LogoutButton).gameObject.BindEvent(SignOut);
+        Get<Button>((int)Buttons.LogoutButton).gameObject.BindEvent(OnClickLogoutButton);
         Get<Button>((int)Buttons.QuitButton).gameObject.BindEvent(OnClickQuitButton);
 
         Get<GameObject>((int)GameObjects.Menu).SetActive(false);
@@ -76,6 +95,7 @@ public class UI_LobbyPopup : UI_Popup
 
         userInfoRef = Manager.Data.DB.GetReference(UserInfo.Root)
             .Child(Manager.Data.Auth.CurrentUser.UserId);
+        communityRef = Manager.Data.DB.GetReference(Community.Root);
 
         InformationInit();
 
@@ -83,6 +103,9 @@ public class UI_LobbyPopup : UI_Popup
         PlayerManager.Instance.OnEnterRoom += OnEnterRoom;
         PlayerManager.Instance.OnLeaveRoom -= OnLeaveRoom;
         PlayerManager.Instance.OnLeaveRoom += OnLeaveRoom;
+
+        communityRef.ValueChanged -= OnUpdatePost;
+        communityRef.ValueChanged += OnUpdatePost;
 
         return true;
     }
@@ -97,7 +120,11 @@ public class UI_LobbyPopup : UI_Popup
 
     private void OnClickRankBattleButton() { ActiveDisplay(GameObjects.RankBattleDisplay); }
 
-    private void OnClickMockBattleButton() { ActiveDisplay(GameObjects.MockBattleDisplay); }
+    private void OnClickMockBattleButton()
+    {
+        ActiveDisplay(GameObjects.MockBattleDisplay);
+        Get<TMP_InputField>((int)InputFields.PostInputField).ActivateInputField();
+    }
 
     private void OnClickBattleLogButton() { ActiveDisplay(GameObjects.BattleLogDisplay); }
 
@@ -131,7 +158,35 @@ public class UI_LobbyPopup : UI_Popup
         Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(true);
     }
 
-    private void OnClickCreateRoomButton() { Debug.Log("방만들기버튼"); }
+    private void OnClickCreateRoomButton()
+    {
+        TMP_InputField postInput = Get<TMP_InputField>((int)InputFields.PostInputField);
+        if (string.IsNullOrEmpty(postInput.text))
+            return;
+
+        Button button = Get<Button>((int)Buttons.CreateRoomButton);
+        button.gameObject.EventActive(false);
+
+        string nick = Manager.Game.MyInfo.nickName;
+        string post = $"{nick} : {postInput.text}";
+
+        var send = new Dictionary<string, object>
+        { { "post", post } ,{$"logs/{DateTime.Now}", post } };
+        communityRef.UpdateChildrenAsync(send).ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCompleted)
+                postInput.text = string.Empty;
+
+            button.gameObject.EventActive(true);
+            Get<TMP_InputField>((int)InputFields.PostInputField).ActivateInputField();
+        });
+    }
+
+    private void OnClickLogoutButton()
+    {
+        var send = new Dictionary<string, object> { { "isConnect", false } };
+        userInfoRef.UpdateChildrenAsync(send);
+    }
 
     private void ActiveDisplay(GameObjects objects)
     {
@@ -225,18 +280,13 @@ public class UI_LobbyPopup : UI_Popup
     {
         userInfoRef.GetValueAsync().ContinueWithOnMainThread(task =>
         {
-            if (task.IsCanceled)
-            {
-                // 불러오기 취소 처음 화면으로
-                SignOut();
-                return;
-            }
-            else if (task.IsFaulted)
+            if (task.IsCompleted == false)
             {
                 // 불러오기 실패 처음 화면으로
-                SignOut();
+                Manager.Data.SignOut();
                 return;
             }
+
             DataSnapshot snapshot = task.Result;
             string json = snapshot.GetRawJsonValue();
 
@@ -256,40 +306,7 @@ public class UI_LobbyPopup : UI_Popup
             Get<TMP_Text>((int)Texts.RankPointText).text = $"점수 : {userInfo.rankPoint}";
 
             Manager.Game.SetMyInfo(userInfo);
-
-            var send = new Dictionary<string, object> { { "isConnect", false } };
-            userInfoRef.UpdateChildrenAsync(send);
-
-            send = new Dictionary<string, object> { { "isConnect", true } };
-            userInfoRef.UpdateChildrenAsync(send);
-
-            userInfoRef.ValueChanged -= OnDuplicationSignIn;
-            userInfoRef.ValueChanged += OnDuplicationSignIn;
         });
-    }
-
-    private void SignOut()
-    {
-        userInfoRef.ValueChanged -= OnDuplicationSignIn;
-
-        Manager.Game.SetMyInfo(null);
-
-        Manager.Data.Auth.SignOut();
-        Manager.UI.ClearPopupUI();
-        Manager.UI.ShowPopupUI<UI_TitlePopup>();
-    }
-
-    private void OnDuplicationSignIn(object obj, ValueChangedEventArgs args)
-    {
-        string json = args.Snapshot.GetRawJsonValue();
-        UserInfo userInfo = JsonUtility.FromJson<UserInfo>(json);
-        if (userInfo == null)
-            return;
-
-        if (userInfo.isConnect)
-            return;
-
-        SignOut();
     }
 
     private void OnEnterRoom(int playerId)
@@ -305,9 +322,33 @@ public class UI_LobbyPopup : UI_Popup
         Manager.UI.ShowPopupUI<UI_NetworkNotification>();
     }
 
+    private void OnUpdatePost(object obj, ValueChangedEventArgs args)
+    {
+        string json = args.Snapshot.GetRawJsonValue();
+        Community community = JsonUtility.FromJson<Community>(json);
+        if (community == null)
+            return;
+
+        if (postQue.Count == 10)
+        {
+            UI_Post oldPost = postQue.Dequeue();
+            oldPost.SetInfo(community.post);
+            oldPost.gameObject.transform.SetAsLastSibling();
+            postQue.Enqueue(oldPost);
+        }
+        else
+        {
+            Transform postContent = Get<GameObject>((int)GameObjects.PostContent).transform;
+            UI_Post newPost = Manager.UI.MakeSubItem<UI_Post>(postContent);
+            newPost.SetInfo(community.post);
+            postQue.Enqueue(newPost);
+        }
+    }
+
     private void OnDestroy()
     {
         PlayerManager.Instance.OnEnterRoom -= OnEnterRoom;
+        communityRef.ValueChanged -= OnUpdatePost;
     }
 }
 
@@ -323,4 +364,11 @@ public class UserInfo
     /// </summary>
     public int[] log;
     public bool isConnect; // 중복로그인 확인용 변수
+}
+
+public class Community
+{
+    public const string Root = "Community/";
+
+    public string post;
 }

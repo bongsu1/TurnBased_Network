@@ -56,7 +56,7 @@ public class Manager : MonoBehaviour
         }
     }
 
-    private void OnApplicationQuit()
+    private void OnDiable()
     {
         if (s_dataManager.IsVaild == false)
             return;

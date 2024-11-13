@@ -49,5 +49,14 @@ public class DataManager
             }
         });
     }
+
+    public void SignOut()
+    {
+        Manager.Game.SetMyInfo(null);
+
+        _auth.SignOut();
+        Manager.UI.ClearPopupUI();
+        Manager.UI.ShowPopupUI<UI_TitlePopup>();
+    }
     #endregion
 }

@@ -407,7 +407,7 @@ public class UI_BattlePopup : UI_Popup
 
             ActiveSkillButton(false);
 
-            Manager.Network.Disconnect();
+            PlayerManager.Instance.ClearLeaveEvnet();
 
             // 전투 정보 초기화
             Manager.Game.SetPickList(null, null);
@@ -482,6 +482,9 @@ public class UI_BattlePopup : UI_Popup
     private IEnumerator EndRoutine()
     {
         yield return new WaitForSeconds(2);
+
+        Manager.Network.Disconnect();
+
         Manager.UI.ClosePopupUI(this);
         Manager.UI.ShowPopupUI<UI_LobbyPopup>();
     }

@@ -1,12 +1,11 @@
-using System.Collections;
+using Firebase.Auth;
+using Firebase.Database;
+using Firebase.Extensions;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using Firebase.Extensions;
-using Firebase.Auth;
-using System.Threading.Tasks;
-using System;
 
 public class UI_TitlePopup : UI_Popup
 {
@@ -23,6 +22,8 @@ public class UI_TitlePopup : UI_Popup
         SignupButton,
         ShowPWButton,
     }
+
+    private DatabaseReference userInfoRef = null;
 
     private void Update()
     {
@@ -43,6 +44,11 @@ public class UI_TitlePopup : UI_Popup
                 Get<TMP_InputField>((int)InputFields.IDInputField).ActivateInputField();
             }
         }
+
+        if (Input.GetKeyDown(KeyCode.Return))
+        {
+            OnClickLoginButton();
+        }
     }
 
     protected override bool Init()
@@ -57,6 +63,9 @@ public class UI_TitlePopup : UI_Popup
         Get<Button>((int)Buttons.GuestButton).gameObject.BindEvent(OnGuestButtonClick);
         Get<Button>((int)Buttons.SignupButton).gameObject.BindEvent(OnClickSignupButton);
         Get<Button>((int)Buttons.ShowPWButton).gameObject.BindEvent(OnClickShowPWButton);
+
+        Get<TMP_InputField>((int)InputFields.IDInputField).gameObject.BindEvent(LoadPrefs);
+        Get<TMP_InputField>((int)InputFields.PasswordInputField).gameObject.BindEvent(LoadPrefs);
 
         return true;
     }
@@ -113,22 +122,47 @@ public class UI_TitlePopup : UI_Popup
     {
         if (task.IsCanceled)
         {
-            Debug.LogError("로그인 취소");
+            Debug.LogError($"로그인 취소");
             ActiveButton(true);
             return;
         }
-        if (task.IsFaulted)
+        else if (task.IsFaulted)
         {
-            Debug.LogError($"로그인 실패: {task.Exception}");
+            Debug.LogError($"로그인 실패 {task.Exception}");
             ActiveButton(true);
             return;
         }
 
-        AuthResult result = task.Result;
-        Debug.Log($"로그인 성공: {result.User.DisplayName} ({result.User.UserId})");
+        string email = Get<TMP_InputField>((int)InputFields.IDInputField).text;
+        string password = Get<TMP_InputField>((int)InputFields.PasswordInputField).text;
 
-        Manager.UI.ClosePopupUI(this);
-        Manager.UI.ShowPopupUI<UI_LobbyPopup>();
+        PlayerPrefs.SetString("email", email);
+        PlayerPrefs.SetString("password", password);
+
+        string userId = Manager.Data.Auth.CurrentUser.UserId;
+        userInfoRef = Manager.Data.DB.GetReference(UserInfo.Root).Child(userId);
+
+        SignInCheck().ContinueWithOnMainThread(task =>
+        {
+            if (task.IsCanceled)
+            {
+                Manager.Data.Auth.SignOut();
+                Debug.LogError($"로그인 체크 취소");
+                return;
+            }
+            else if (task.IsFaulted)
+            {
+                Manager.Data.Auth.SignOut();
+                Debug.LogError($"로그인 체크 실패 {task.Exception}");
+                return;
+            }
+
+            userInfoRef.ValueChanged -= OnDuplicationSignIn;
+            userInfoRef.ValueChanged += OnDuplicationSignIn;
+
+            Manager.UI.ClosePopupUI(this);
+            Manager.UI.ShowPopupUI<UI_LobbyPopup>();
+        });
     }
 
     private void ActiveButton(bool active)
@@ -141,5 +175,47 @@ public class UI_TitlePopup : UI_Popup
 
         Get<Button>((int)Buttons.SignupButton).interactable = active;
         Get<Button>((int)Buttons.SignupButton).gameObject.EventActive(active);
+    }
+
+    private Task SignInCheck()
+    {
+        var send = new Dictionary<string, object> { { "isConnect", false } };
+        userInfoRef.UpdateChildrenAsync(send);
+
+        send = new Dictionary<string, object> { { "isConnect", true } };
+        return userInfoRef.UpdateChildrenAsync(send);
+    }
+
+    private void OnDuplicationSignIn(object obj, ValueChangedEventArgs args)
+    {
+        string json = args.Snapshot.GetRawJsonValue();
+        UserInfo userInfo = JsonUtility.FromJson<UserInfo>(json);
+        if (userInfo == null)
+            return;
+
+        if (userInfo.isConnect)
+            return;
+
+        userInfoRef.ValueChanged -= OnDuplicationSignIn;
+        Manager.Data.SignOut();
+    }
+
+    bool isLoaded = false; // 한번만 실행
+    private void LoadPrefs() // 인풋필드를 클릭하면 실행
+    {
+        if (isLoaded)
+            return;
+
+        string email = PlayerPrefs.GetString("email", null);
+        if (string.IsNullOrEmpty(email))
+            return;
+
+        string password = PlayerPrefs.GetString("password", null);
+        if (string.IsNullOrEmpty(password))
+            return;
+
+        Get<TMP_InputField>((int)InputFields.IDInputField).text = email;
+        Get<TMP_InputField>((int)InputFields.PasswordInputField).text = password;
+        isLoaded = true;
     }
 }
