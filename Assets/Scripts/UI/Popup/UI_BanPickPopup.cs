@@ -112,7 +112,9 @@ public class UI_BanPickPopup : UI_Popup
         // 방에 먼저 들어온사람이 선픽
         first = Manager.Game.IsFirst;
 
+        PlayerManager.Instance.OnSelectPickUp -= OnSelectPick;
         PlayerManager.Instance.OnSelectPickUp += OnSelectPick;
+        PlayerManager.Instance.OnSelectItem -= ShowPickItem;
         PlayerManager.Instance.OnSelectItem += ShowPickItem;
 
         Get<Button>((int)Buttons.SelectButton).gameObject.BindEvent(OnClickSelectButton);
@@ -286,7 +288,7 @@ public class UI_BanPickPopup : UI_Popup
         // 테스트
         Get<Image>((int)Images.My1stPicked + ban).color = Color.red;
 
-        PlayerManager.Instance.ClearBanEvent();
+        PlayerManager.Instance.OnSelectBan -= OnSelectBan;
         Manager.Game.SetPickList(firstPickList, secondPickList);
 
         StartCoroutine(ToBattleRoutine());
@@ -329,7 +331,11 @@ public class UI_BanPickPopup : UI_Popup
         }
         else
         {
-            PlayerManager.Instance.ClearSelectEvent();
+            // 이벤트 제거
+            PlayerManager.Instance.OnSelectPickUp -= OnSelectPick;
+            PlayerManager.Instance.OnSelectItem -= ShowPickItem;
+
+            PlayerManager.Instance.OnSelectBan -= OnSelectBan;
             PlayerManager.Instance.OnSelectBan += OnSelectBan;
             ActiveSelectButton(false);
             ActiveBanButton(true);
@@ -338,7 +344,8 @@ public class UI_BanPickPopup : UI_Popup
 
     private void OnDestroy()
     {
-        PlayerManager.Instance.ClearSelectEvent();
-        PlayerManager.Instance.ClearBanEvent();
+        PlayerManager.Instance.OnSelectPickUp -= OnSelectPick;
+        PlayerManager.Instance.OnSelectItem -= ShowPickItem;
+        PlayerManager.Instance.OnSelectBan -= OnSelectBan;
     }
 }

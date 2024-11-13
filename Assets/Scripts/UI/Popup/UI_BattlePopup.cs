@@ -123,6 +123,7 @@ public class UI_BattlePopup : UI_Popup
 
         InfomationInit(first);
 
+        PlayerManager.Instance.OnTakeSkill -= ActionTurn;
         PlayerManager.Instance.OnTakeSkill += ActionTurn;
 
         Get<Button>((int)Buttons.MatchQuitButton).gameObject.BindEvent(OnClickMatchQuitButton);
@@ -410,7 +411,7 @@ public class UI_BattlePopup : UI_Popup
 
             // 전투 정보 초기화
             Manager.Game.SetPickList(null, null);
-            PlayerManager.Instance.ClearSkillEvent();
+            PlayerManager.Instance.OnTakeSkill -= ActionTurn;
 
             RecordBattle();
             StartCoroutine(EndRoutine());
@@ -513,7 +514,7 @@ public class UI_BattlePopup : UI_Popup
 
     private void OnDestroy()
     {
-        PlayerManager.Instance.ClearSkillEvent();
+        PlayerManager.Instance.OnTakeSkill -= ActionTurn;
     }
 }
 

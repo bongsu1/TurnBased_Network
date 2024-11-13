@@ -74,9 +74,15 @@ public class UI_LobbyPopup : UI_Popup
         Get<GameObject>((int)GameObjects.Menu).SetActive(false);
         Get<GameObject>((int)GameObjects.Matching).SetActive(false);
 
-        userInfoRef = Manager.Data.DB.GetReference(UserInfo.Root);
+        userInfoRef = Manager.Data.DB.GetReference(UserInfo.Root)
+            .Child(Manager.Data.Auth.CurrentUser.UserId);
 
         InformationInit();
+
+        PlayerManager.Instance.OnEnterRoom -= OnEnterRoom;
+        PlayerManager.Instance.OnEnterRoom += OnEnterRoom;
+        PlayerManager.Instance.OnLeaveRoom -= OnLeaveRoom;
+        PlayerManager.Instance.OnLeaveRoom += OnLeaveRoom;
 
         return true;
     }
@@ -103,9 +109,15 @@ public class UI_LobbyPopup : UI_Popup
         Get<Button>((int)Buttons.RankMatchButton).gameObject.EventActive(false);
 
         if (isMatching == false)
+        {
+            Debug.Log("Match Start");
             Manager.Network.Connect();
+        }
         else
+        {
+            Debug.Log("Match Cancel");
             Manager.Network.Disconnect();
+        }
 
         isMatching = isMatching == false;
         StartCoroutine(WaitConnectRoutine());
@@ -211,8 +223,7 @@ public class UI_LobbyPopup : UI_Popup
 
     private void InformationInit()
     {
-        string userID = Manager.Data.Auth.CurrentUser.UserId;
-        userInfoRef.Child(userID).GetValueAsync().ContinueWithOnMainThread(task =>
+        userInfoRef.GetValueAsync().ContinueWithOnMainThread(task =>
         {
             if (task.IsCanceled)
             {
@@ -237,7 +248,7 @@ public class UI_LobbyPopup : UI_Popup
                 userInfo = new UserInfo() { nickName = $"new{rand}", rankPoint = 0, log = newLog, isConnect = true };
 
                 string newJson = JsonUtility.ToJson(userInfo);
-                userInfoRef.Child(userID).SetRawJsonValueAsync(newJson);
+                userInfoRef.SetRawJsonValueAsync(newJson);
             }
 
             Get<TMP_Text>((int)Texts.ProfileImageText).text = userInfo.nickName;
@@ -246,16 +257,57 @@ public class UI_LobbyPopup : UI_Popup
 
             Manager.Game.SetMyInfo(userInfo);
 
-            var send = new Dictionary<string, object> { { "isConnect", true } };
-            userInfoRef.Child(userID).UpdateChildrenAsync(send);
+            var send = new Dictionary<string, object> { { "isConnect", false } };
+            userInfoRef.UpdateChildrenAsync(send);
+
+            send = new Dictionary<string, object> { { "isConnect", true } };
+            userInfoRef.UpdateChildrenAsync(send);
+
+            userInfoRef.ValueChanged -= OnDuplicationSignIn;
+            userInfoRef.ValueChanged += OnDuplicationSignIn;
         });
     }
 
     private void SignOut()
     {
+        userInfoRef.ValueChanged -= OnDuplicationSignIn;
+
+        Manager.Game.SetMyInfo(null);
+
         Manager.Data.Auth.SignOut();
-        Manager.UI.ClosePopupUI(this);
+        Manager.UI.ClearPopupUI();
         Manager.UI.ShowPopupUI<UI_TitlePopup>();
+    }
+
+    private void OnDuplicationSignIn(object obj, ValueChangedEventArgs args)
+    {
+        string json = args.Snapshot.GetRawJsonValue();
+        UserInfo userInfo = JsonUtility.FromJson<UserInfo>(json);
+        if (userInfo == null)
+            return;
+
+        if (userInfo.isConnect)
+            return;
+
+        SignOut();
+    }
+
+    private void OnEnterRoom(int playerId)
+    {
+        // Player ID : 상대 ID
+        Manager.Game.IsFirst = playerId == 1;
+        Manager.UI.ClearPopupUI();
+        Manager.UI.ShowPopupUI<UI_BanPickPopup>();
+    }
+
+    private void OnLeaveRoom()
+    {
+        Manager.UI.ShowPopupUI<UI_NetworkNotification>();
+    }
+
+    private void OnDestroy()
+    {
+        PlayerManager.Instance.OnEnterRoom -= OnEnterRoom;
     }
 }
 
@@ -270,5 +322,5 @@ public class UserInfo
     /// idx : 0 = win, 1 = defeat
     /// </summary>
     public int[] log;
-    public bool isConnect;
+    public bool isConnect; // 중복로그인 확인용 변수
 }

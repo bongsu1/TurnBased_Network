@@ -12,6 +12,8 @@ public class PlayerManager
     Dictionary<int, Player> _players = new();
 
     #region event
+    public event Action<int> OnEnterRoom;
+    public event Action OnLeaveRoom;
     public event Action<int> OnSelectPickUp;
     public event Action<int> OnSelectItem;
     public event Action<int> OnSelectBan;
@@ -19,22 +21,6 @@ public class PlayerManager
     /// first int : charIdx, second int : skillIdx
     /// </summary>
     public event Action<int, int> OnTakeSkill;
-
-    public void ClearSelectEvent()
-    {
-        OnSelectPickUp = null;
-        OnSelectItem = null;
-    }
-
-    public void ClearBanEvent()
-    {
-        OnSelectBan = null;
-    }
-
-    public void ClearSkillEvent()
-    {
-        OnTakeSkill = null;
-    }
     #endregion
 
     public void Leave(S_BroadcastLeaveGame p)
@@ -44,13 +30,10 @@ public class PlayerManager
 
     public void Enter(S_BroadcastEnterGame p)
     {
+        // 상대 Player ID
         Debug.Log($"Enter Player ID : {p.playerId}");
 
-        #region 매칭완료
-        Manager.Game.IsFirst = p.playerId == 0;
-        Manager.UI.ClearPopupUI();
-        Manager.UI.ShowPopupUI<UI_BanPickPopup>();
-        #endregion
+        OnEnterRoom?.Invoke(p.playerId);
     }
 
     public void LastBan(S_LastBanPick p)
@@ -60,22 +43,25 @@ public class PlayerManager
 
     public void GetPick(S_PickUp p)
     {
-        OnSelectPickUp?.Invoke(p.pickIdx);
         Debug.Log($"Pick : {p.pickIdx}");
+
+        OnSelectPickUp?.Invoke(p.pickIdx);
     }
 
     public void BanPick(S_BanPick p)
     {
+        Debug.Log($"Ban : {p.banId}");
+
         // 밴 대신 픽 아이템(확정이 아닐때)로 사용
         OnSelectItem?.Invoke(p.banId);
         OnSelectBan?.Invoke(p.banId);
-        Debug.Log($"Ban : {p.banId}");
     }
 
     public void Attack(S_Attck p)
     {
-        OnTakeSkill?.Invoke(p.atckId, p.skillId);
         Debug.Log($"Attack Index : {p.atckId}, Skill : {p.skillId},Damager {p.damValue}");
+
+        OnTakeSkill?.Invoke(p.atckId, p.skillId);
     }
 
     public void Result(S_Result p)
@@ -91,8 +77,6 @@ public class PlayerManager
 
     public void PlayerList(S_PlayerList player)
     {
-        // 이거 뭐임?
-        //UnityEngine.Object obj = Resources.Load("Player");
         foreach (var go in player.players)
         {
             Debug.Log($"PlayerList ID: {go.playerId}, Its Mine {go.isSelf}");
@@ -102,19 +86,25 @@ public class PlayerManager
 
     public void LeaveGame(S_BroadcastLeaveGame p)
     {
+        Debug.Log("LeaveGame0");
         if (_player.ID == p.playerId)
         {
+            Debug.Log("LeaveGame1");
             GameObject.Destroy(_player.gameObject);
             _player = null;
         }
         else
         {
+            Debug.Log("LeaveGame2");
             if (_players.TryGetValue(p.playerId, out Player player))
             {
+                Debug.Log("LeaveGame3");
                 GameObject.Destroy(player.gameObject);
                 _players.Remove(p.playerId);
             }
         }
+
+        Debug.Log("LeaveGame4");
     }
 
 
