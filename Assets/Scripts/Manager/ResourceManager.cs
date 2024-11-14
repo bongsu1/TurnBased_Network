@@ -6,9 +6,14 @@ public class ResourceManager
 {
     private Dictionary<string, Object> _resources = new Dictionary<string, Object>(); // 필요시 분류
 
+    private List<AssetBundle> _bundles = new List<AssetBundle>();
+
+    private bool _assetVaild = false;
+    public bool AssetVaild { get { return _assetVaild; } }
+
     public void Init()
     {
-        // 초기화
+        LoadAssetBundle();
     }
 
     public T Load<T>(string path) where T : Object
@@ -21,14 +26,34 @@ public class ResourceManager
         }
         else
         {
-            T resource = Resources.Load<T>(path);
+            #region 리소스 버전
+            /*T resource = Resources.Load<T>(path);
             if (resource == null)
             {
                 Debug.Log($"잘못된 경로 : {path}");
                 return null;
             }
             _resources.Add(key, resource);
+            return resource;*/
+            #endregion
+            #region 에셋번들 버전
+            T resource = null;
+            for (int i = 0; i < _bundles.Count; i++)
+            {
+                Debug.Log(_bundles[i]);
+                resource = _bundles[i].LoadAsset<T>(path);
+                if (resource != null)
+                    break;
+            }
+            if (resource == null)
+            {
+                Debug.Log($"잘못된 이름 : {path}");
+                return null;
+            }
+
+            _resources.Add(key, resource);
             return resource;
+            #endregion
         }
     }
 
@@ -77,5 +102,18 @@ public class ResourceManager
         Object.Destroy(go);
     }
 
-    // 추후에 어드에서블 또는 에셋번들로 변경
+    #region AssetBundleLoad
+    private void LoadAssetBundle()
+    {
+        AssetBundle prefabs = AssetBundle.LoadFromFile("Bundle/prefabs");
+        AssetBundle scriptable_objects = AssetBundle.LoadFromFile("Bundle/scriptable_objects");
+        AssetBundle images = AssetBundle.LoadFromFile("Bundle/images");
+
+        _bundles.Add(prefabs);
+        _bundles.Add(scriptable_objects);
+        _bundles.Add(images);
+
+        _assetVaild = true;
+    }
+    #endregion
 }

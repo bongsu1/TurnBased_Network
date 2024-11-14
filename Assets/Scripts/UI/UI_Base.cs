@@ -27,10 +27,8 @@ public class UI_Base : MonoBehaviour
         return _init = true;
     }
 
-    // 테스트용
-    private IEnumerator Start()
+    private void Start()
     {
-        yield return new WaitUntil(() => Manager.Data.IsVaild);
         Init();
     }
 

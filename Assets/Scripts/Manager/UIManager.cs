@@ -31,7 +31,7 @@ public class UIManager
         if (EventSystem.current != null)
             return;
 
-        EventSystem eventSystem = Manager.Resource.Instantiate<EventSystem>("Prefab/UI/EventSystem");
+        EventSystem eventSystem = Manager.Resource.Instantiate<EventSystem>("EventSystem");
     }
 
     public void SetCanvas(GameObject go, bool sort = true)
@@ -54,7 +54,7 @@ public class UIManager
     {
         if (string.IsNullOrEmpty(path))
         {
-            path = $"Prefab/UI/Popup/{typeof(T).Name}";
+            path = typeof(T).Name;
         }
 
         GameObject go = Manager.Resource.Instantiate(path);
@@ -76,7 +76,7 @@ public class UIManager
         if (string.IsNullOrEmpty(name))
             name = typeof(T).Name;
 
-        T prefab = Manager.Resource.Load<T>($"Prefab/UI/SubItem/{name}");
+        T prefab = Manager.Resource.Load<T>(name);
         T subItem = Manager.Resource.Instantiate(prefab, parent);
 
         subItem.transform.localScale = Vector3.one;

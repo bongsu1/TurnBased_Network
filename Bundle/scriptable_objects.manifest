@@ -1,0 +1,29 @@
+ManifestFileVersion: 0
+CRC: 3524233607
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 1695c395bc47ab99719b8a3402c35e86
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 30dbd7b0a19dd435f7034fa58059aff3
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 1695c395bc47ab99719b8a3402c35e86
+HashAppended: 0
+ClassTypes:
+- Class: 114
+  Script: {fileID: 11500000, guid: e078a1dea7882624cac6413b1103336b, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: a4f6937ba6255164eb20dd34c5e9c4ae, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: a0c4ab1f42d1c344ca3da6a844a181fd, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Resources/ScriptableObject/CharacterDictionary.asset
+Dependencies:
+- C:/Unity_Project/TurnBased_Network/./Bundle/images

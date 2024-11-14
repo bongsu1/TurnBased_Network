@@ -43,12 +43,14 @@ public class Manager : MonoBehaviour
             s_networkManager.SetConnet(ServerCore.Define.Connect.Domain);
 
             // 매니저들 초기화
-            s_gameManager.Init();
+            s_resourceManager.Init();
             s_dataManager.Init();
             s_sceneManager.Init();
-            s_uiManager.Init();
-            s_resourceManager.Init();
             s_soundManager.Init();
+
+            // Init에서 resourceManager를 부르기 때문에 가장 뒤에 실행
+            s_uiManager.Init();
+            s_gameManager.Init();
 
 #if UNITY_ANDROID
             Application.targetFrameRate = 60;

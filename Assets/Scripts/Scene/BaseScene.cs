@@ -6,8 +6,9 @@ public class BaseScene : MonoBehaviour
 {
     protected bool _init = false;
 
-    private void Start()
+    private IEnumerator Start()
     {
+        yield return new WaitUntil(() => Manager.Data.IsVaild && Manager.Resource.AssetVaild);
         Init();
     }
 

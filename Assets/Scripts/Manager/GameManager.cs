@@ -17,7 +17,7 @@ public class GameManager
 
     public void Init()
     {
-        characterDictionary = Manager.Resource.Load<CharacterDictionary>("ScriptableObject/CharacterDictionary");
+        characterDictionary = Manager.Resource.Load<CharacterDictionary>("CharacterDictionary");
     }
 
     public void SetMyInfo(UserInfo userInfo)
