@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 257813389
+CRC: 84790324
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: d4a2fca8768008f4f9f84de6f0f22b01
+    Hash: 35cfde3c98e5b74dc9d7e98e4870d8ec
   TypeTreeHash:
     serializedVersion: 2
     Hash: 2d8df09e698f722ada1caa03d3413830
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: d4a2fca8768008f4f9f84de6f0f22b01
+    Hash: 35cfde3c98e5b74dc9d7e98e4870d8ec
 HashAppended: 0
 ClassTypes:
 - Class: 28
@@ -29,6 +29,7 @@ Assets:
 - Assets/Imports/Pokemon Image/torchic_front.png
 - Assets/Imports/Pokemon Image/cyndaquil_front.png
 - Assets/Imports/Pokemon Image/bulbasaur_back.png
+- Assets/Imports/Pokemon Image/pidgey_front.png
 - Assets/Imports/Pokemon Image/treecko_back.png
 - Assets/Imports/Pokemon Image/chikorita_back.png
 - Assets/Imports/Pokemon Image/cyndaquil_back.png
@@ -39,5 +40,6 @@ Assets:
 - Assets/Imports/Pokemon Image/charmander_front.png
 - Assets/Imports/Pokemon Image/squirtle_back.png
 - Assets/Imports/Pokemon Image/chikorita_front.png
+- Assets/Imports/Pokemon Image/pidgey_back.png
 - Assets/Imports/Pokemon Image/bulbasaur_front.png
 Dependencies: []

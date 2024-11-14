@@ -28,6 +28,14 @@ public class Manager : MonoBehaviour
         Init();
     }
 
+    public static Coroutine UseCoroutine(IEnumerator enumerator)
+    {
+        if (s_instance == null)
+            return null;
+
+        return s_instance.StartCoroutine(enumerator);
+    }
+
     private static void Init()
     {
         if (s_instance == null)
@@ -67,5 +75,7 @@ public class Manager : MonoBehaviour
             return;
 
         s_dataManager.Auth.SignOut();
+
+        s_resourceManager.UnLoadAllAssets();
     }
 }

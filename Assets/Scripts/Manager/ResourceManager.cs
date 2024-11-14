@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class ResourceManager
 {
@@ -13,7 +14,7 @@ public class ResourceManager
 
     public void Init()
     {
-        LoadAssetBundle();
+        Manager.UseCoroutine(LoadAssetBundle());
     }
 
     public T Load<T>(string path) where T : Object
@@ -40,7 +41,6 @@ public class ResourceManager
             T resource = null;
             for (int i = 0; i < _bundles.Count; i++)
             {
-                Debug.Log(_bundles[i]);
                 resource = _bundles[i].LoadAsset<T>(path);
                 if (resource != null)
                     break;
@@ -103,8 +103,13 @@ public class ResourceManager
     }
 
     #region AssetBundleLoad
-    private void LoadAssetBundle()
+
+
+
+    private IEnumerator LoadAssetBundle()
     {
+#if UNITY_EDITOR
+        // 로컬 파일
         AssetBundle prefabs = AssetBundle.LoadFromFile("Bundle/prefabs");
         AssetBundle scriptable_objects = AssetBundle.LoadFromFile("Bundle/scriptable_objects");
         AssetBundle images = AssetBundle.LoadFromFile("Bundle/images");
@@ -113,7 +118,55 @@ public class ResourceManager
         _bundles.Add(scriptable_objects);
         _bundles.Add(images);
 
+        yield return null;
+#elif UNITY_STANDALONE
+        string[] downloadUrls =
+        {
+            "https://docs.google.com/uc?export=download&id=1bbua37HMyBK1sDYi_EbwN_jnoOEcmM1j", // 프리팹 번들
+            "https://docs.google.com/uc?export=download&id=1Dcx8OOvGAidhG_sW8KA-TKibfG80Q4YR", // 스크립터블 오브젝트 번들
+            "https://docs.google.com/uc?export=download&id=1WebPxpQhmDc6TH4TiLwLvzLkFBphIgJQ" // 이미지 번들
+        };
+
+        for (int i = 0; i < downloadUrls.Length; i++)
+        {
+            using (UnityWebRequest uwr = UnityWebRequestAssetBundle.GetAssetBundle(downloadUrls[i]))
+            {
+                yield return uwr.SendWebRequest();
+
+                AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(uwr);
+                _bundles.Add(assetBundle);
+            }
+        }
+#elif UNITY_ANDROID
+        string[] downloadUrls =
+        {
+            "https://docs.google.com/uc?export=download&id=1pFCbT_a8DaIyR88Pe7XBtRTfTbSQ4ruq", // 프리팹 번들
+            "https://docs.google.com/uc?export=download&id=1mLocgnA4x7XvE-OQu4pNF-glh2RAgmrY", // 스크립터블 오브젝트 번들
+            "https://docs.google.com/uc?export=download&id=1IHXVqbYGJulYaa3mKpk5LqM9OBfGADKD" // 이미지 번들
+        };
+
+        for (int i = 0; i < downloadUrls.Length; i++)
+        {
+            using (UnityWebRequest uwr = UnityWebRequestAssetBundle.GetAssetBundle(downloadUrls[i]))
+            {
+                yield return uwr.SendWebRequest();
+
+                AssetBundle assetBundle = DownloadHandlerAssetBundle.GetContent(uwr);
+                _bundles.Add(assetBundle);
+
+                // 디버깅용
+                //UI_LogError prefab = Resources.Load<UI_LogError>("UI_LogError");
+                //UI_LogError ui = UnityEngine.Object.Instantiate(prefab);
+                //ui.SetInfo($"에셋번들 : {assetBundle}");
+            }
+        }
+#endif
         _assetVaild = true;
+    }
+
+    public void UnLoadAllAssets()
+    {
+        AssetBundle.UnloadAllAssetBundles(true);
     }
     #endregion
 }

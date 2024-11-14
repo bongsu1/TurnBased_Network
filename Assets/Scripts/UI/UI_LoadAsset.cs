@@ -36,7 +36,7 @@ public class UI_LoadAsset : UI_Base
             Get<TMP_Text>((int)Texts.LoadingText).text = loadingTexts[idx];
 
             ++idx;
-            if (idx > loadingTexts.Length)
+            if (idx == loadingTexts.Length)
                 idx = 0;
         }
 

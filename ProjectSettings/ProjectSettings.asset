@@ -162,6 +162,7 @@ PlayerSettings:
   androidMaxAspectRatio: 2.1
   applicationIdentifier:
     Android: com.bbbstudio.turnbased
+    Standalone: com.BBBstudio.TurnBased
   buildNumber:
     Standalone: 0
     VisionOS: 0

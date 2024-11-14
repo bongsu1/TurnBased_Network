@@ -1,15 +1,15 @@
 ManifestFileVersion: 0
-CRC: 3024898706
+CRC: 2152689433
 Hashes:
   AssetFileHash:
     serializedVersion: 2
-    Hash: cd9195e181979455bbe70706ed99596b
+    Hash: 2429370b320455d032715cf7470d506a
   TypeTreeHash:
     serializedVersion: 2
     Hash: de1f659e4f7d04927c2a35cccf3210ed
   IncrementalBuildHash:
     serializedVersion: 2
-    Hash: cd9195e181979455bbe70706ed99596b
+    Hash: 2429370b320455d032715cf7470d506a
 HashAppended: 0
 ClassTypes:
 - Class: 1
@@ -144,13 +144,13 @@ SerializeReferenceClassIdentifiers:
 - AssemblyName: UnityEngine.UI
   ClassName: UnityEngine.UI.SpriteState
 Assets:
-- Assets/Resources/Prefab/UI/SubItem/UI_PickItem.prefab
-- Assets/Resources/Prefab/UI/Popup/UI_LobbyPopup.prefab
-- Assets/Resources/Prefab/UI/Popup/UI_NetworkNotification.prefab
-- Assets/Resources/Prefab/UI/Popup/UI_TitlePopup.prefab
-- Assets/Resources/Prefab/UI/EventSystem.prefab
-- Assets/Resources/Prefab/UI/Popup/UI_SignupPopup.prefab
-- Assets/Resources/Prefab/UI/Popup/UI_BattlePopup.prefab
-- Assets/Resources/Prefab/UI/Popup/UI_BanPickPopup.prefab
-- Assets/Resources/Prefab/UI/SubItem/UI_Post.prefab
+- Assets/AssetBundles/Prefab/UI/SubItem/UI_PickItem.prefab
+- Assets/AssetBundles/Prefab/UI/Popup/UI_LobbyPopup.prefab
+- Assets/AssetBundles/Prefab/UI/Popup/UI_NetworkNotification.prefab
+- Assets/AssetBundles/Prefab/UI/Popup/UI_TitlePopup.prefab
+- Assets/AssetBundles/Prefab/UI/EventSystem.prefab
+- Assets/AssetBundles/Prefab/UI/Popup/UI_SignupPopup.prefab
+- Assets/AssetBundles/Prefab/UI/Popup/UI_BattlePopup.prefab
+- Assets/AssetBundles/Prefab/UI/Popup/UI_BanPickPopup.prefab
+- Assets/AssetBundles/Prefab/UI/SubItem/UI_Post.prefab
 Dependencies: []

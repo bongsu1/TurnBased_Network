@@ -76,8 +76,8 @@ public class UIManager
         if (string.IsNullOrEmpty(name))
             name = typeof(T).Name;
 
-        T prefab = Manager.Resource.Load<T>(name);
-        T subItem = Manager.Resource.Instantiate(prefab, parent);
+        GameObject prefab = Manager.Resource.Load<GameObject>(name);
+        T subItem = Manager.Resource.Instantiate(prefab, parent).GetOrAddComponent<T>();
 
         subItem.transform.localScale = Vector3.one;
         subItem.transform.localPosition = prefab.transform.position;

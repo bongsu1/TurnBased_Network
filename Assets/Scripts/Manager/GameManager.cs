@@ -17,6 +17,12 @@ public class GameManager
 
     public void Init()
     {
+        Manager.UseCoroutine(LoadDictionary());
+    }
+
+    private IEnumerator LoadDictionary()
+    {
+        yield return new WaitUntil(() => Manager.Resource.AssetVaild);
         characterDictionary = Manager.Resource.Load<CharacterDictionary>("CharacterDictionary");
     }
 

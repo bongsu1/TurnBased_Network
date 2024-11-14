@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e078a1dea7882624cac6413b1103336b, type: 3}
+  m_Name: pidgey
+  m_EditorClassIdentifier: 
+  charID: 16
+  charName: "\uAD6C\uAD6C"
+  hp: 40
+  speed: 56
+  skills:
+  - {fileID: 11400000, guid: f0e96f8d839a8a148b6d66a6f33cdf42, type: 2}
+  - {fileID: 11400000, guid: f0e96f8d839a8a148b6d66a6f33cdf42, type: 2}
+  - {fileID: 11400000, guid: f0e96f8d839a8a148b6d66a6f33cdf42, type: 2}
+  frontImage: {fileID: 21300000, guid: 7ccfd591d1b0ef74c9796d09863e494c, type: 3}
+  backImage: {fileID: 21300000, guid: 75e115b6a6f170d4881d1d21ef9f42b1, type: 3}
