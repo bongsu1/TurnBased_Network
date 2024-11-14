@@ -31,7 +31,7 @@ public class UIManager
         if (EventSystem.current != null)
             return;
 
-        EventSystem eventSystem = Manager.Resource.Instantiate<EventSystem>("Prefab/UI/EventSystem");
+        EventSystem eventSystem = Manager.Resource.Instantiate<EventSystem>("EventSystem");
     }
 
     public void SetCanvas(GameObject go, bool sort = true)
@@ -54,7 +54,7 @@ public class UIManager
     {
         if (string.IsNullOrEmpty(path))
         {
-            path = $"Prefab/UI/Popup/{typeof(T).Name}";
+            path = typeof(T).Name;
         }
 
         GameObject go = Manager.Resource.Instantiate(path);
@@ -69,6 +69,20 @@ public class UIManager
         // 위치설정 추가
 
         return popup;
+    }
+
+    public T MakeSubItem<T>(Transform parent = null, string name = null) where T : UI_Base
+    {
+        if (string.IsNullOrEmpty(name))
+            name = typeof(T).Name;
+
+        GameObject prefab = Manager.Resource.Load<GameObject>(name);
+        T subItem = Manager.Resource.Instantiate(prefab, parent).GetOrAddComponent<T>();
+
+        subItem.transform.localScale = Vector3.one;
+        subItem.transform.localPosition = prefab.transform.position;
+
+        return subItem;
     }
 
     public void ClosePopupUI()
@@ -94,6 +108,14 @@ public class UIManager
         }
 
         ClosePopupUI();
+    }
+
+    public T PeekPopupUI<T>() where T : UI_Popup
+    {
+        if (_popupStack.Count == 0)
+            return null;
+
+        return _popupStack.Peek() as T;
     }
 
     public void ClearPopupUI()

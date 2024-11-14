@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e078a1dea7882624cac6413b1103336b, type: 3}
+  m_Name: Eevee
+  m_EditorClassIdentifier: 
+  charID: 133
+  charName: "\uC774\uBE0C\uC774"
+  hp: 55
+  speed: 55
+  skills:
+  - {fileID: 11400000, guid: f0e96f8d839a8a148b6d66a6f33cdf42, type: 2}
+  - {fileID: 11400000, guid: d18c6e8eb24750d43a38a78dd481d19b, type: 2}
+  - {fileID: 11400000, guid: 11950f50bfcfd394fb811a2180a51263, type: 2}
+  frontImage: {fileID: 21300000, guid: 54c47f022c601fb44add5ce131839c46, type: 3}
+  backImage: {fileID: 21300000, guid: 88cb80319ed0efe4091478b879bc24cc, type: 3}

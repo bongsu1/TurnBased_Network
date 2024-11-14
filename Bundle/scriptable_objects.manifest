@@ -1,0 +1,46 @@
+ManifestFileVersion: 0
+CRC: 2868579469
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: 87bc3a3264ace2b2a3aa7ea2d2d73e7f
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 30dbd7b0a19dd435f7034fa58059aff3
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: 87bc3a3264ace2b2a3aa7ea2d2d73e7f
+HashAppended: 0
+ClassTypes:
+- Class: 114
+  Script: {fileID: 11500000, guid: e078a1dea7882624cac6413b1103336b, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: a4f6937ba6255164eb20dd34c5e9c4ae, type: 3}
+- Class: 114
+  Script: {fileID: 11500000, guid: a0c4ab1f42d1c344ca3da6a844a181fd, type: 3}
+- Class: 115
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/AssetBundles/ScriptableObject/CharacterData/pidgey.asset
+- Assets/AssetBundles/ScriptableObject/SkillData/Ember.asset
+- Assets/AssetBundles/ScriptableObject/CharacterDictionary.asset
+- Assets/AssetBundles/ScriptableObject/SkillData/VineWhip.asset
+- Assets/AssetBundles/ScriptableObject/CharacterData/Bulbasaur.asset
+- Assets/AssetBundles/ScriptableObject/CharacterData/Chikorita.asset
+- Assets/AssetBundles/ScriptableObject/CharacterData/Treecko.asset
+- Assets/AssetBundles/ScriptableObject/SkillData/WaterGun.asset
+- Assets/AssetBundles/ScriptableObject/SkillData/Tackle.asset
+- Assets/AssetBundles/ScriptableObject/CharacterData/Pikachu.asset
+- Assets/AssetBundles/ScriptableObject/CharacterData/Torchic.asset
+- Assets/AssetBundles/ScriptableObject/SkillData/Thundershock.asset
+- Assets/AssetBundles/ScriptableObject/CharacterData/Squirtle.asset
+- Assets/AssetBundles/ScriptableObject/CharacterData/Cyndaquil.asset
+- Assets/AssetBundles/ScriptableObject/CharacterData/Eevee.asset
+- Assets/AssetBundles/ScriptableObject/CharacterData/Charmander.asset
+- Assets/AssetBundles/ScriptableObject/CharacterData/Mudkip.asset
+- Assets/AssetBundles/ScriptableObject/CharacterData/Totodile.asset
+Dependencies:
+- C:/Unity_Project/TurnBased_Network/./Bundle/images

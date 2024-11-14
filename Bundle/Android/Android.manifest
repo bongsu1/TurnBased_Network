@@ -1,0 +1,14 @@
+ManifestFileVersion: 0
+CRC: 1418213034
+AssetBundleManifest:
+  AssetBundleInfos:
+    Info_0:
+      Name: scriptable_objects
+      Dependencies:
+        Dependency_0: images
+    Info_1:
+      Name: images
+      Dependencies: {}
+    Info_2:
+      Name: prefabs
+      Dependencies: {}

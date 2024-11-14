@@ -1,0 +1,45 @@
+ManifestFileVersion: 0
+CRC: 3035054681
+Hashes:
+  AssetFileHash:
+    serializedVersion: 2
+    Hash: b1525f1005983f90f8093e31b6211326
+  TypeTreeHash:
+    serializedVersion: 2
+    Hash: 2d8df09e698f722ada1caa03d3413830
+  IncrementalBuildHash:
+    serializedVersion: 2
+    Hash: b1525f1005983f90f8093e31b6211326
+HashAppended: 0
+ClassTypes:
+- Class: 28
+  Script: {instanceID: 0}
+- Class: 213
+  Script: {instanceID: 0}
+SerializeReferenceClassIdentifiers: []
+Assets:
+- Assets/Imports/Pokemon Image/eevee_back.png
+- Assets/Imports/Pokemon Image/totodile_back.png
+- Assets/Imports/Pokemon Image/eevee_front.png
+- Assets/Imports/Pokemon Image/squirtle_front.png
+- Assets/Imports/Pokemon Image/mudkip_back.png
+- Assets/Imports/Pokemon Image/charmander_back.png
+- Assets/Imports/Pokemon Image/mudkip_front.png
+- Assets/Imports/Pokemon Image/pikachu_front.png
+- Assets/Imports/Pokemon Image/torchic_front.png
+- Assets/Imports/Pokemon Image/cyndaquil_front.png
+- Assets/Imports/Pokemon Image/bulbasaur_back.png
+- Assets/Imports/Pokemon Image/pidgey_front.png
+- Assets/Imports/Pokemon Image/treecko_back.png
+- Assets/Imports/Pokemon Image/chikorita_back.png
+- Assets/Imports/Pokemon Image/cyndaquil_back.png
+- Assets/Imports/Pokemon Image/torchic_back.png
+- Assets/Imports/Pokemon Image/pikachu_back.png
+- Assets/Imports/Pokemon Image/treecko_front.png
+- Assets/Imports/Pokemon Image/totodile_front.png
+- Assets/Imports/Pokemon Image/charmander_front.png
+- Assets/Imports/Pokemon Image/squirtle_back.png
+- Assets/Imports/Pokemon Image/chikorita_front.png
+- Assets/Imports/Pokemon Image/pidgey_back.png
+- Assets/Imports/Pokemon Image/bulbasaur_front.png
+Dependencies: []

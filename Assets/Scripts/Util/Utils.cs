@@ -38,6 +38,7 @@ public class Utils
 
     public static GameObject FindChild(GameObject go, string name = null, bool recursive = false)
     {
-        return null;
+        GameObject gameObject = FindChild<Transform>(go, name, recursive).gameObject;
+        return gameObject;
     }
 }

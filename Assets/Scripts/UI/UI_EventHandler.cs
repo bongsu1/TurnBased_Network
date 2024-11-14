@@ -7,17 +7,26 @@ using UnityEngine.EventSystems;
 public class UI_EventHandler : MonoBehaviour, IPointerClickHandler, IPointerDownHandler, IPointerUpHandler
 {
     public event Action onClickHandler = null;
-    public event Action onPressedHandler = null; // IDragHandler 사용해도 되지 않나?
+    public event Action onPressedHandler = null;
     public event Action onPointerDownHandler = null;
     public event Action onPointerUpHandler = null;
 
+    private bool interactable = true;
+    public bool Interactable { get { return interactable; } set { interactable = value; } }
+
     public void OnPointerClick(PointerEventData eventData)
     {
+        if (interactable == false)
+            return;
+
         onClickHandler?.Invoke();
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
+        if (interactable == false)
+            return;
+
         onPointerDownHandler?.Invoke();
 
         if (onPressedHandler != null && pressedRoutine == null)
@@ -28,6 +37,9 @@ public class UI_EventHandler : MonoBehaviour, IPointerClickHandler, IPointerDown
 
     public void OnPointerUp(PointerEventData eventData)
     {
+        if (interactable == false)
+            return;
+
         if (onPressedHandler != null && pressedRoutine != null)
         {
             StopCoroutine(pressedRoutine);
@@ -37,9 +49,12 @@ public class UI_EventHandler : MonoBehaviour, IPointerClickHandler, IPointerDown
         onPointerUpHandler?.Invoke();
     }
 
+    // 1초 이상 눌리고 있어야 작동 되도록 기다림
+    private WaitForSeconds waitPressed = new WaitForSeconds(1.0f);
     private Coroutine pressedRoutine;
     private IEnumerator PressedRoutine()
     {
+        yield return waitPressed;
         while (true)
         {
             onPressedHandler?.Invoke();

@@ -35,8 +35,8 @@ public class UI_Base : MonoBehaviour
     /// <summary>
     /// Enum을 사용하여 바인딩
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="enumType"></param>
+    /// <typeparam nickName="T"></typeparam>
+    /// <param nickName="enumType"></param>
     protected void Bind<T>(Type enumType) where T : UnityEngine.Object
     {
         if (enumType.IsEnum == false)
@@ -61,8 +61,8 @@ public class UI_Base : MonoBehaviour
     /// <summary>
     /// Enum을 통해 인덱스로 접근
     /// </summary>
-    /// <typeparam name="T"></typeparam>
-    /// <param name="idx"></param>
+    /// <typeparam nickName="T"></typeparam>
+    /// <param nickName="idx"></param>
     /// <returns></returns>
     protected T Get<T>(int idx) where T : UnityEngine.Object
     {
@@ -94,9 +94,15 @@ public class UI_Base : MonoBehaviour
                 evt.onPointerUpHandler -= action;
                 evt.onPointerUpHandler += action;
                 break;
-            default:
-                Debug.Log("이벤트핸들러 매칭 안됨");
-                break;
         }
+    }
+
+    public static void EventActive(GameObject go, bool active)
+    {
+        UI_EventHandler evt = go.GetComponent<UI_EventHandler>();
+        if (evt == null)
+            return;
+
+        evt.Interactable = active;
     }
 }
